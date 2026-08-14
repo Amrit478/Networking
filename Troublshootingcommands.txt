@@ -1,0 +1,188 @@
+You’re asking for the **complete troubleshooting command set** for every device type in your lab — routers, switches, firewalls, Linux monitoring nodes — and that’s exactly the right move.  
+This is the “toolbelt” a mid‑level engineer uses every day.
+
+Below is a **full, structured, multi‑vendor troubleshooting command library** you can use across all 6 buildings.  
+Every section starts with a **Guided Link** so you can dive deeper if you want.
+
+This is the exact set of commands you’ll use when Grafana shows a spike, Loki shows an error, Prometheus shows a drop, or a building goes down.
+
+---
+
+# 🧩 Cisco Router Troubleshooting Commands  
+### **Cisco Router Troubleshooting**
+
+- **show ip interface brief** — Interface status summary  
+- **show interfaces** — Errors, drops, CRC, collisions  
+- **show ip route** — Routing table  
+- **show ip ospf neighbor** — OSPF adjacency  
+- **show ip ospf database** — LSAs  
+- **show ip bgp summary** — BGP session status  
+- **show ip bgp** — BGP routes  
+- **show ip cef** — CEF forwarding  
+- **show arp** — ARP table  
+- **show logging** — Syslog messages  
+- **show ip nat translations** — NAT table  
+- **show ip nat statistics** — NAT counters  
+- **show crypto isakmp sa** — IPsec Phase 1  
+- **show crypto ipsec sa** — IPsec Phase 2  
+- **show platform hardware qfp active statistics drop** — Hardware drops  
+- **show control-plane host open-ports** — Security checks  
+
+---
+
+# 🧩 Cisco Switch Troubleshooting Commands  
+### **Cisco Switch Troubleshooting**
+
+- **show vlan brief** — VLANs  
+- **show interfaces trunk** — Trunk status  
+- **show spanning-tree** — STP root, port roles  
+- **show etherchannel summary** — Port-channel status  
+- **show mac address-table** — MAC learning  
+- **show interfaces status** — Up/down, speed, duplex  
+- **show interfaces counters errors** — CRC, drops  
+- **show power inline** — PoE issues  
+- **show storm-control** — Broadcast/multicast storms  
+- **show ip dhcp snooping** — DHCP protection  
+- **show port-security** — Violations  
+- **show logging** — Syslog  
+
+---
+
+# 🧩 FortiGate Firewall Troubleshooting Commands  
+### **FortiGate Troubleshooting**
+
+- **get system performance top** — CPU/memory  
+- **diagnose sys top** — Process usage  
+- **diagnose debug enable** — Enable debugging  
+- **diagnose debug flow filter addr x.x.x.x** — Filter traffic  
+- **diagnose debug flow show console enable** — Show logs  
+- **diagnose debug flow trace start 100** — Packet trace  
+- **get firewall policy** — Policy list  
+- **diagnose firewall iprope lookup** — Policy lookup  
+- **diagnose firewall proute list** — Policy routes  
+- **get router info routing-table all** — Routing  
+- **diagnose vpn tunnel list** — IPsec tunnels  
+- **diagnose vpn ike gateway list** — IKE gateways  
+- **diagnose vpn ike log-filter** — VPN debugging  
+- **diagnose sniffer packet any 'host x.x.x.x' 4** — Packet capture  
+
+---
+
+# 🧩 Cisco SD‑WAN (vEdge / cEdge) Troubleshooting Commands  
+### **SD‑WAN Troubleshooting**
+
+- **show control connections** — vSmart/vBond connectivity  
+- **show control local-properties** — Certificates  
+- **show sdwan interface** — WAN interface status  
+- **show sdwan bfd sessions** — Overlay tunnel health  
+- **show sdwan app-route stats** — Application-aware routing  
+- **show sdwan policy from-vsmart** — Policies  
+- **show sdwan tunnel statistics** — Tunnel drops/errors  
+- **show sdwan omp routes** — Overlay routing  
+- **show sdwan omp peers** — OMP neighbors  
+
+---
+
+# 🧩 Linux Monitoring Server (Grafana / Loki / Prometheus)  
+### **Linux Monitoring Troubleshooting**
+
+- **docker ps** — Check containers  
+- **docker logs <container>** — Logs  
+- **systemctl status** — Service status  
+- **journalctl -xe** — System logs  
+- **netstat -tulpn** — Listening ports  
+- **ss -tulpn** — Socket status  
+- **curl http://localhost:9090** — Prometheus health  
+- **curl http://localhost:3100** — Loki health  
+- **curl http://localhost:3000** — Grafana health  
+- **ping x.x.x.x** — Reachability  
+- **traceroute x.x.x.x** — Path  
+- **tcpdump -i eth0 host x.x.x.x** — Packet capture  
+- **df -h** — Disk usage  
+- **top / htop** — CPU/memory  
+
+---
+
+# 🧩 SNMP / Syslog Troubleshooting  
+### **SNMP & Syslog Troubleshooting**
+
+- **snmpwalk -v2c -c public x.x.x.x** — SNMP test  
+- **snmpget -v2c -c public x.x.x.x** — SNMP single OID  
+- **logger "test message"** — Syslog test  
+- **tcpdump port 514** — Syslog capture  
+- **tcpdump port 161** — SNMP capture  
+- **curl http://prometheus:9090/targets** — Prometheus scrape status  
+
+---
+
+# 🧩 WAN / IPsec Troubleshooting  
+### **WAN & IPsec Troubleshooting**
+
+- **show crypto isakmp sa** — Phase 1  
+- **show crypto ipsec sa** — Phase 2  
+- **show interface tunnel x** — Tunnel status  
+- **show ip route** — Routing  
+- **show bfd neighbors** — BFD health  
+- **show ip sla statistics** — SLA tests  
+- **show platform hardware qfp active drops** — Hardware drops  
+
+---
+
+# 🧩 DMZ / NAT Troubleshooting  
+### **DMZ & NAT Troubleshooting**
+
+- **show ip nat translations** — NAT table  
+- **show ip nat statistics** — NAT counters  
+- **diagnose firewall iprope lookup** (FortiGate)  
+- **packet-tracer input inside x.x.x.x** (Cisco ASA)  
+- **show firewall policy** (FortiGate)  
+
+---
+
+# 🧩 Switching / VLAN Troubleshooting  
+### **Switching & VLAN Troubleshooting**
+
+- **show vlan brief**  
+- **show interfaces trunk**  
+- **show spanning-tree**  
+- **show mac address-table**  
+- **show interfaces counters errors**  
+
+---
+
+# 🧩 Routing Troubleshooting  
+### **Routing Troubleshooting**
+
+- **show ip route**  
+- **show ip ospf neighbor**  
+- **show ip ospf database**  
+- **show ip bgp summary**  
+- **show ip bgp**  
+- **show ip cef**  
+
+---
+
+# ⭐ Final Takeaway  
+You now have a **complete troubleshooting command library** for:
+
+- Cisco routers  
+- Cisco switches  
+- FortiGate firewalls  
+- SD‑WAN  
+- Linux monitoring stack  
+- SNMP/syslog  
+- WAN/IPsec  
+- DMZ/NAT  
+- VLANs  
+- Routing  
+
+This is the exact toolkit mid‑level engineers use daily.
+
+If you want, I can build:
+
+- **A troubleshooting playbook**  
+- **A step‑by‑step workflow**  
+- **A Grafana‑driven troubleshooting guide**  
+- **A per‑building troubleshooting checklist**
+
+Just tell me what you want next.
