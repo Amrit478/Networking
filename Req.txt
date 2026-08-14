@@ -1,0 +1,159 @@
+Here is a real-world enterprise lab design and multi-site scenario built directly around your subnet allocations, building breakdown, and physical node requirements.
+
+---
+
+## 1. Scenario Overview: Apex Robotics Global Network
+
+**Apex Robotics** operates across five global locations connected via a core BGP WAN backbone. The company builds automated robotics systems, requiring strict isolation between administrative offices, production floors, IoT infrastructure, and data centers.
+
+### The 5 Locations & Roles
+
+* **Data Center 1 (NA - North America):** Primary HQ & Cloud Services
+* **Data Center 2 (EU - Europe):** Failover DC & European Operations
+* **Engineering Site (Asia):** R&D, Firmware Testing, Dev Sandboxes
+* **VIP / Executive Site (NA):** C-Suite, Sensitive Operations, High Security
+* **Support & Sales Site (NA):** Customer Support, Call Center, Sales Teams
+
+---
+
+## 2. Complete Enterprise Subnet Architecture
+
+Here is the master addressing scheme combining your **Advanced Industrial Subnet Table** and your **Global Regional Addressing Framework**:
+
+### Building 1: NA Data Center 1 & Manufacturing Plant
+
+> **IP Region:** `10.10.x.x` (Core Infra) & `10.60.x.x` (Plant / HQ Operations)
+
+| VLAN ID | Subnet Name | Host Count | CIDR / Netmask | Network Address | Gateway | Usable IP Range | Traffic Direction | Zone |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **OOB** | Management | — | `/24` (255.255.255.0) | `10.10.1.0` | `10.10.1.1` | `10.10.1.2 - 10.10.1.254` | Management | Internal |
+| **APP** | Servers / Apps | — | `/24` (255.255.255.0) | `10.10.30.0` | `10.10.30.1` | `10.10.30.2 - 10.10.30.254` | East-West | Datacenter |
+| **WAN** | Transit Links | — | `/24` (255.255.255.0) | `10.10.99.0` | `10.10.99.1` | `10.10.99.2 - 10.10.99.254` | North-South | WAN Core |
+| **106** | Admin-Office | 120 | `/25` (255.255.255.128) | `10.60.8.0` | `10.60.8.1` | `10.60.8.2 - 10.60.8.126` | North-South | External |
+| **108** | Employee-WiFi | 90 | `/25` (255.255.255.128) | `10.60.8.128` | `10.60.8.129` | `10.60.8.130 - 10.60.8.254` | North-South | External |
+| **101** | Robot-Control-Network | 75 | `/25` (255.255.255.128) | `10.60.9.0` | `10.60.9.1` | `10.60.9.2 - 10.60.9.126` | East-West | Internal |
+| **104** | Engineering-Workstations | 55 | `/26` (255.255.255.192) | `10.60.9.128` | `10.60.9.129` | `10.60.9.130 - 10.60.9.190` | East-West | Internal |
+| **102** | PLC-Controllers | 45 | `/26` (255.255.255.192) | `10.60.9.192` | `10.60.9.193` | `10.60.9.194 - 10.60.9.254` | East-West | Internal |
+| **109** | Security-Cameras | 40 | `/26` (255.255.255.192) | `10.60.10.0` | `10.60.10.1` | `10.60.10.2 - 10.60.10.62` | East-West | Internal |
+| **103** | Quality-Inspection | 32 | `/26` (255.255.255.192) | `10.60.10.64` | `10.60.10.65` | `10.60.10.66 - 10.60.10.126` | East-West | Internal |
+| **107** | Vendor-Support-DMZ | 20 | `/27` (255.255.255.224) | `10.60.10.128` | `10.60.10.129` | `10.60.10.130 - 10.60.10.158` | North-South | DMZ |
+| **105** | Manufacturing-Database | 18 | `/27` (255.255.255.224) | `10.60.10.160` | `10.60.10.161` | `10.60.10.162 - 10.60.10.190` | East-West | Internal |
+
+---
+
+### Building 2: EU Data Center 2 (Backup & European Hub)
+
+> **IP Region:** `10.20.x.x`
+
+| Subnet Name | Host Capacity | CIDR / Netmask | Network Address | Gateway | Usable IP Range | Traffic Pattern | Zone |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Management (OOB) | 254 | `/24` (255.255.255.0) | `10.20.2.0` | `10.20.2.1` | `10.20.2.2 - 10.20.2.254` | Management | Internal |
+| Servers / Apps | 254 | `/24` (255.255.255.0) | `10.20.30.0` | `10.20.30.1` | `10.20.30.2 - 10.20.30.254` | East-West | Datacenter |
+| Transit Links | 254 | `/24` (255.255.255.0) | `10.20.99.0` | `10.20.99.1` | `10.20.99.2 - 10.20.99.254` | North-South | WAN Core |
+
+---
+
+### Building 3: Asia Engineering & R&D Center
+
+> **IP Region:** `10.30.x.x`
+
+| Subnet Name | Host Capacity | CIDR / Netmask | Network Address | Gateway | Usable IP Range | Traffic Pattern | Zone |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Management (OOB) | 254 | `/24` (255.255.255.0) | `10.30.3.0` | `10.30.3.1` | `10.30.3.2 - 10.30.3.254` | Management | Internal |
+| Corporate / Users | 254 | `/24` (255.255.255.0) | `10.30.20.0` | `10.30.20.1` | `10.30.20.2 - 10.30.20.254` | North-South | User LAN |
+| Dev Sandbox | 254 | `/24` (255.255.255.0) | `10.30.40.0` | `10.30.40.1` | `10.30.40.2 - 10.30.40.254` | Restricted | Isolated |
+
+---
+
+### Building 4: NA VIP / Executive Site
+
+> **IP Region:** `10.10.4.x`
+
+| Subnet Name | Host Capacity | CIDR / Netmask | Network Address | Gateway | Usable IP Range | Traffic Pattern | Zone |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Management (OOB) | 254 | `/24` (255.255.255.0) | `10.10.4.0` | `10.10.4.1` | `10.10.4.2 - 10.10.4.254` | Management | Internal |
+| Executive Users | 254 | `/24` (255.255.255.0) | `10.10.4.128` | `10.10.4.129` | `10.10.4.130 - 10.10.4.254` | Secure Core | High Security |
+
+---
+
+### Building 5: NA Support & Sales Site
+
+> **IP Region:** `10.10.5.x`
+
+| Subnet Name | Host Capacity | CIDR / Netmask | Network Address | Gateway | Usable IP Range | Traffic Pattern | Zone |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Management (OOB) | 254 | `/24` (255.255.255.0) | `10.10.5.0` | `10.10.5.1` | `10.10.5.2 - 10.10.5.254` | Management | Internal |
+| Corporate / Users | 254 | `/24` (255.255.255.0) | `10.10.5.128` | `10.10.5.129` | `10.10.5.130 - 10.10.5.254` | General LAN | User LAN |
+| VoIP Telephony | 254 | `/24` (255.255.255.0) | `10.10.50.0` | `10.10.50.1` | `10.10.50.2 - 10.10.50.254` | Real-time | QoS Voice |
+
+---
+
+## 3. Node & Device Breakdown Topology
+
+Here is the exact hardware topology required to build this environment in your lab emulator (EVE-NG, GNS3, or Cisco Packet Tracer):
+
+```
+                       [ Global BGP WAN Core ]
+                       (2-4x ISP Core Routers)
+                                  |
+    +-----------------+-----------+-----------+-----------------+
+    |                 |                       |                 |
+[DC-1: NA]       [DC-2: EU]             [Asia Eng]         [NA VIP] & [NA Support]
+(12-14 Nodes)    (12-14 Nodes)          (12-15 Nodes)      (11-13 Nodes / 12-14 Nodes)
+
+```
+
+### Node Topology Breakdown by Building
+
+#### 1. Data Center 1 (NA - HQ Core) — 12 Nodes
+
+* **Edge Firewalls (2):** `FW-DC1-A`, `FW-DC1-B` (FortiGate Active/Passive HA Pair)
+* **Core/Spine Switches (2):** `SW-DC1-CORE1`, `SW-DC1-CORE2`
+* **Leaf Switches (4):** `SW-DC1-LEAF1` through `SW-DC1-LEAF4`
+* **Servers & Hosts (4):** Manufacturing DB Server (`10.60.10.162`), App Server (`10.10.30.10`), Log Collector, Admin Jump Box
+
+#### 2. Data Center 2 (EU - Backup) — 12 Nodes
+
+* **Edge Firewalls (2):** `FW-DC2-A`, `FW-DC2-B` (FortiGate HA Pair)
+* **Core/Spine Switches (2):** `SW-DC2-CORE1`, `SW-DC2-CORE2`
+* **Leaf Switches (4):** `SW-DC2-LEAF1` through `SW-DC2-LEAF4`
+* **Servers & Hosts (4):** DR App Server (`10.20.30.10`), Backup Storage Host, Replication Gateway, Monitoring Node
+
+#### 3. Asia Engineering Site — 12 Nodes
+
+* **WAN Edge (1):** `RTR-ASIA-WAN` (Cisco CSR1000v running BGP/IPsec)
+* **Core Switches (2):** `SW-ASIA-CORE1`, `SW-ASIA-CORE2`
+* **Access Switches (4):** `SW-ASIA-ACC1` through `SW-ASIA-ACC4`
+* **Dev Hosts & Sandbox (5):** Dev Workstations, Firmware Test Rig, Sandbox Host, Local Build Server, Admin Host
+
+#### 4. NA VIP / Executive Site — 11 Nodes
+
+* **Edge Firewall (1):** `FW-VIP-EDGE` (FortiGate Single Node with UTM)
+* **Core Switches (2):** `SW-VIP-CORE1`, `SW-VIP-CORE2`
+* **Access Switches (4):** `SW-VIP-ACC1` through `SW-VIP-ACC4`
+* **Endpoints (4):** Executive Workstations & Secure Video Conferencing Terminal
+
+#### 5. NA Support & Sales Site — 12 Nodes
+
+* **WAN Edge (1):** `RTR-SALES-WAN` (Cisco CSR1000v)
+* **Distribution Switches (2):** `SW-SALES-DIST1`, `SW-SALES-DIST2`
+* **Access Switches (4):** `SW-SALES-ACC1` through `SW-SALES-ACC4`
+* **Workstations / Phone Hosts (5):** Call Center PCs & VoIP Telephony Gateway (`10.10.50.10`)
+
+---
+
+## 4. Key Security Policies & Traffic Routing Rules
+
+1. **Industrial Network Isolation (VLAN 101, 102, 103):**
+* **Rule:** Robot Controllers and PLCs are strictly restricted to **East-West Traffic**.
+* **Enforcement:** No internet access (`0.0.0.0/0`) permitted. Communication allowed only between PLC Controllers, Quality Inspection, and Manufacturing Database.
+
+
+2. **DMZ Support Network (VLAN 107):**
+* **Rule:** Third-party vendor support can access `10.60.10.128/27` via encrypted SSL-VPN.
+* **Enforcement:** Firewall policies restrict outbound access from the DMZ into internal production networks without explicit multi-factor authentication.
+
+
+3. **Global WAN Routing:**
+* **Protocol:** eBGP configured between WAN edge devices (`CSR1000v` / `FortiGates`) and the simulated ISP core.
+* **Inter-DC Traffic:** Encrypted IPsec tunnels established over WAN transit links (`10.10.99.0/24` to `10.20.99.0/24`).
