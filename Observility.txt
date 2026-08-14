@@ -1,3 +1,145 @@
+### High-level architecture
+
+You’re building a **centralized observability stack** where **one Linux server** collects and visualizes data from **all 6 buildings**:
+
+- **Grafana** → dashboards & alerts  
+- **Prometheus** → metrics (CPU, interfaces, SNMP, etc.)   [datazone.de](https://datazone.de/en/aktuelles/grafana-prometheus-loki-stack-self-hosted/)  [dasroot.net](https://dasroot.net/posts/2026/04/observability-stack-prometheus-grafana-loki/)  
+- **Loki** → logs (syslog, device logs)   [datazone.de](https://datazone.de/en/aktuelles/grafana-prometheus-loki-stack-self-hosted/)  [Medium](https://medium.com/@gagreatprogrammer/building-a-modern-network-observability-stack-combining-prometheus-grafana-and-loki-for-deep-ac55ce92f55d)  
+- **Exporters/agents** → SNMP exporter, node exporter, Promtail, etc.   [codeshrew.github.io](https://codeshrew.github.io/ai-lab-notes/posts/2026-02-08_self-hosted-monitoring-prometheus-grafana-loki/)  [tobias-weiss.org](https://tobias-weiss.org/content/devops/production-observability-stack-grafana-prometheus-loki/)  
+
+All 6 buildings send data **over your existing routed network** (OSPF/BGP/IPsec/SD‑WAN) to this one node.
+
+---
+
+### 1. Placement of the observability server
+
+**Best practice:**
+
+- **Zone:** DC1 (North America Data Center) in a **Monitoring/Management subnet**  
+- **Example subnet:** `10.10.200.0/24`  
+- **Server IP:** `10.10.200.10` (static)  
+
+Every building must be able to route to `10.10.200.10`.
+
+---
+
+### 2. Data flows from each building
+
+#### Metrics (Prometheus)
+
+- **From:**  
+  - Routers (via SNMP exporter)  
+  - Switches (via SNMP exporter)  
+  - Firewalls (via SNMP exporter or API exporter)  
+  - Linux hosts (node exporter)  
+- **To:** Prometheus on `10.10.200.10` (pull model)   [codeshrew.github.io](https://codeshrew.github.io/ai-lab-notes/posts/2026-02-08_self-hosted-monitoring-prometheus-grafana-loki/)  [dasroot.net](https://dasroot.net/posts/2026/04/observability-stack-prometheus-grafana-loki/)  
+
+**Flow:**
+
+- Prometheus scrapes exporters at each site:
+  - SNMP exporter: `tcp/9116`  
+  - Node exporter: `tcp/9100`  
+- Routing ensures reachability from DC1 → all buildings.
+
+---
+
+#### Logs (Loki)
+
+- **From:**  
+  - Routers/switches/firewalls via **syslog**  
+  - Linux devices via Promtail  
+- **To:** Loki on `10.10.200.10`   [datazone.de](https://datazone.de/en/aktuelles/grafana-prometheus-loki-stack-self-hosted/)  [Medium](https://medium.com/@gagreatprogrammer/building-a-modern-network-observability-stack-combining-prometheus-grafana-and-loki-for-deep-ac55ce92f55d)  
+
+**Flow:**
+
+- Devices send syslog to `10.10.200.10:514/udp` (or `601/tcp`).  
+- Promtail on the monitoring server (or per site) ships logs into Loki.
+
+---
+
+#### Visualization (Grafana)
+
+- **Grafana** runs on the same Linux server (`10.10.200.10:3000`).   [datazone.de](https://datazone.de/en/aktuelles/grafana-prometheus-loki-stack-self-hosted/)  [tobias-weiss.org](https://tobias-weiss.org/content/devops/production-observability-stack-grafana-prometheus-loki/)  
+- It connects to:
+  - Prometheus (metrics)  
+  - Loki (logs)  
+
+You build dashboards for:
+
+- Per-building health  
+- WAN links  
+- Firewalls  
+- SD‑WAN tunnels  
+- CPU/memory/interface stats  
+- Error/drops/log events
+
+---
+
+### 3. Network requirements
+
+For **each building**:
+
+- **Routing:**
+  - A route to `10.10.200.0/24` (via WAN/SD‑WAN/IPsec).  
+- **Firewall rules:**
+  - Allow:
+    - Syslog: `udp/514` (and/or `tcp/601`)  
+    - SNMP: `udp/161`, `udp/162` (traps)  
+    - Prometheus scrapes: `tcp/9100`, `tcp/9116`, etc.  
+    - Grafana UI (optional admin access): `tcp/3000`  
+
+Nothing is “out of the network”—it’s all just **different subnets connected by your routing**.
+
+---
+
+### 4. Logical architecture summary
+
+**Per building:**
+
+- **Devices:** routers, switches, firewalls, servers  
+- **Agents/exporters:** SNMP exporter, node exporter, syslog config  
+
+**Central node (DC1):**
+
+- **Prometheus:** scrapes metrics from all buildings  
+- **Loki:** receives logs from all buildings  
+- **Grafana:** visualizes everything, sends alerts  
+
+---
+
+### 5. Is this feasible?
+
+Yes—this is **exactly** how real enterprises do it:
+
+- One or a few **central observability nodes**  
+- Many **sites/buildings** feeding metrics/logs  
+- Unified dashboards and alerts for the whole network   [Medium](https://medium.com/@gagreatprogrammer/building-a-modern-network-observability-stack-combining-prometheus-grafana-and-loki-for-deep-ac55ce92f55d)  [dasroot.net](https://dasroot.net/posts/2026/04/observability-stack-prometheus-grafana-loki/)  
+
+You’re designing a proper, modern network observability architecture.
+
+If you want, next step could be:  
+- Define **exact IPs and ports per building**, or  
+- Design **Grafana dashboards per building and per function (WAN, firewall, switching)**.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 You’re not asking a dumb question at all — you’re asking the **exact question a real network engineer asks when designing multi‑site observability**. What you’re describing is **centralized monitoring**, and yes, it is absolutely feasible, clean, and the correct way to do it.
 
 Let’s break this down clearly so you understand how all 6 buildings can send SNMP + syslog + telemetry to one Linux/Grafana/Loki/Prometheus node.
