@@ -1,0 +1,133 @@
+Here is your complete, 100% static, and hardened master blueprint for the **Data Center (Site 1)**, matching the multi-tiered redundant topology shown in your canvas (`image_e45ec4.png`).
+
+This topology includes dual Fortinet firewall connections, dual core Layer 3 routers (`R4` and `R5`), four redundant access/distribution switches (`R7`, `R9`, `R8`, `R6`), and multiple Linux server endpoints with cross-connected links for maximum high availability and advanced feature testing (HSRP, EtherChannel, MST, and OSPF).
+
+---
+
+# Data Center (Site 1) — Master Blueprint (Hard Mode & 100% Static)
+
+**Supernets:** `10.1.0.0/16` | `2001:DB8:1::/48`
+
+---
+
+### Phase 1: Physical Wiring & High-Availability Architecture
+
+Unlike the branch sites, the Data Center uses a fully redundant core structure with dual gateways running First Hop Redundancy Protocols (FHRP).
+
+1. **Firewall to Core Routers (Point-to-Point):**
+* **Fortinet (`port2`)** to **R4 Core 1 (`e0/0`)**
+* **Fortinet (`port3`)** to **R5 Core 2 (`e0/3`)**
+
+
+2. **Core to Access Switches (Redundant Uplinks):**
+* Both **R4** and **R5** connect down to all four access/distribution switches (`R7`, `R9`, `R8`, `R6`) to ensure dual paths, allowing you to run EtherChannel and MST across the core-to-access tier.
+
+
+3. **Multi-Homed Linux Servers:**
+* Each Linux server (`Linux15`, `Linux14`, `Linux`, `Linux17`, `Linux18`) has multiple network interfaces cross-connected into different switches (`R7`, `R9`, `R8`, `R6`) to simulate active-active server bonding or redundant path testing.
+
+
+
+---
+
+### Phase 2: Layer 2 VLAN & Switch Management Setup
+
+#### 1. The 5 Global VLANs (Modules 3, 6, & 9)
+
+Configure these exact 5 VLANs on **every switch and core router** in the Data Center:
+
+* **VLAN 99:** Management (`Mgmt`)
+* **VLAN 10:** Web & Applications (`Web/App`)
+* **VLAN 20:** Database & Monitoring (`DB/Mon`)
+* **VLAN 30:** Core Services & Storage (`Storage`)
+* **VLAN 40:** Backend Analytics (`Analytics`)
+
+#### 2. Switch Management IP Addressing (Module 2)
+
+All switches operate at Layer 2 on VLAN 99, pointing to the HSRP Virtual IP gateway (`10.1.99.1`).
+
+* **R7 Switch:** `10.1.99.11/24` (Gateway: `10.1.99.1`)
+* **R9 Switch:** `10.1.99.12/24` (Gateway: `10.1.99.1`)
+* **R8 Switch:** `10.1.99.13/24` (Gateway: `10.1.99.1`)
+* **R6 Switch:** `10.1.99.14/24` (Gateway: `10.1.99.1`)
+
+---
+
+### Phase 3: Core Layer 3 Gateways & FHRP (Modules 8, 14, 22)
+
+The Core Routers (`R4` and `R5`) act as redundant default gateways using **HSRP (Hot Standby Router Protocol)**. The Virtual IP is always `.1`, while physical interfaces use `.2` and `.3`.
+
+#### 1. Point-to-Point Links (Core to Firewall)
+
+| Node | Interface | Connection | IPv4 Address (/30) | IPv6 Address (/127) |
+| --- | --- | --- | --- | --- |
+| **R4 (Core 1)** | `e0/0` | To Firewall | `10.1.255.1` | `2001:DB8:1:255::1` |
+| **Fortinet** | `port2` | To R4 | `10.1.255.2` | `2001:DB8:1:255::2` |
+| **R5 (Core 2)** | `e0/3` | To Firewall | `10.1.255.5` | `2001:DB8:1:255::4` |
+| **Fortinet** | `port3` | To R5 | `10.1.255.6` | `2001:DB8:1:255::5` |
+
+#### 2. Core Router SVIs & HSRP Redundancy
+
+| VLAN & Purpose | R4 Physical IP | R5 Physical IP | HSRP Virtual IP (Gateway) | IPv6 Virtual Gateway (/64) |
+| --- | --- | --- | --- | --- |
+| **VLAN 10 (Web/App)** | `10.1.10.2/24` | `10.1.10.3/24` | **`10.1.10.1`** | `2001:DB8:1:10::1` |
+| **VLAN 20 (DB/Mon)** | `10.1.20.2/24` | `10.1.20.3/24` | **`10.1.20.1`** | `2001:DB8:1:20::1` |
+| **VLAN 30 (Storage)** | `10.1.30.2/24` | `10.1.30.3/24` | **`10.1.30.1`** | `2001:DB8:1:30::1` |
+| **VLAN 40 (Analytics)** | `10.1.40.2/24` | `10.1.40.3/24` | **`10.1.40.1`** | `2001:DB8:1:40::1` |
+| **VLAN 99 (Mgmt)** | `10.1.99.2/24` | `10.1.99.3/24` | **`10.1.99.1`** | `2001:DB8:1:99::1` |
+
+---
+
+### Phase 4: Static Linux Server IP Addressing (100% Static)
+
+Since the Data Center is entirely static, every server interface is hardcoded with a fixed IP address and points directly to the HSRP Virtual Gateway (`.1`).
+
+| Node | Assigned VLAN | IPv4 Address (/24) | IPv6 Address (/64) | Default Gateway |
+| --- | --- | --- | --- | --- |
+| **Linux15** | VLAN 10 (Web) | `10.1.10.10` | `2001:DB8:1:10::10` | `10.1.10.1` |
+| **Linux14** | VLAN 10 (Web) | `10.1.10.11` | `2001:DB8:1:10::11` | `10.1.10.1` |
+| **Linux** | VLAN 10 (Web) | `10.1.10.12` | `2001:DB8:1:10::12` | `10.1.10.1` |
+| **Linux17** | VLAN 20 (DB) | `10.1.20.10` | `2001:DB8:1:20::10` | `10.1.20.1` |
+| **Linux18** | VLAN 20 (DB) | `10.1.20.11` | `2001:DB8:1:20::11` | `10.1.20.1` |
+
+---
+
+### Phase 5: Enterprise Layer 3 Integration (OSPF & Summarization)
+
+* **OSPF Area Configuration (Modules 15–17):**
+* Enable OSPF on **R4** and **R5** facing the core WAN/ISP cloud in **Area 0**.
+* Use the enterprise network statement `network 10.1.0.0 0.0.255.255 area 0`.
+* Apply `passive-interface` on all server and management SVIs (`VLAN 10, 20, 30, 40, 99`) to secure internal traffic.
+
+
+* **Route Summarization (Module 19):**
+* Configure OSPF summary routes on **R4/R5** to advertise a clean single supernet (`10.1.0.0/16`) to the Asia, Support/Sales, and VIP branch sites.
+
+
+According to claude
+
+This one's different from the others — it actually looks like it was **already built out** to match the "Hard Mode" redundant design, rather than needing wiring added. A few things to check to confirm it's fully correct, but overall this is much closer than your other three sites.
+
+**1. Icon consistency — checks out**
+
+`R4` and `R5` show the **sun/star icon** and the doc calls them **Core Routers** — consistent. `R7`, `R9`, `R8`, `R6` show the **switch icon** and the doc calls them **access/distribution switches** — also consistent. No mismatch like you had on the VIP and Support/Sales sites.
+
+**2. Firewall to Core Routers — matches**
+
+Doc wants:
+- Fortinet `port2` → R4 `e0/0`
+- Fortinet `port3` → R5 `e0/3`
+
+Your image shows the Fortinet node with **two separate links**, one to R4 and one to R5 — matches the point-to-point dual-homed design.
+
+**3. Core-to-access mesh — looks correct, worth a precise count**
+
+Doc says **both R4 and R5 connect down to all four access switches** — that's a full mesh, meaning **8 total links** (R4→R7, R4→R9, R4→R8, R4→R6, R5→R7, R5→R9, R5→R8, R5→R6). Your image shows a dense web of crossing lines between the two routers and four switches consistent with this. Worth doing a manual count in your simulator to confirm all 8 links exist and none are missing or duplicated — with this many crossing lines it's easy for one to get dropped by accident.
+
+**4. Multi-homed Linux servers — looks correct, same caveat**
+
+Doc wants each server (`Linux15`, `Linux14`, `Linux`, `Linux17`, `Linux18`) connected into **multiple different switches** for active-active redundancy. Your image shows crossing lines from each server to more than one switch, which matches the intent. Again, worth verifying port-by-port that each server has the right number of NICs wired (the doc doesn't specify an exact count per server, so use your own judgment on 2 vs. more, but consistency across servers matters for the lab to behave predictably).
+
+**Bottom line:** unlike your Asia, VIP, and Support/Sales sites — which all needed extra wires added before matching their blueprints — this Data Center topology appears to already be wired for the redundant design. Before moving to config, I'd just do a manual link-by-link audit against Phase 1 to make sure no cross-connect is missing in that dense mesh, since a dropped link here is easy to miss visually.
+
+Want me to build out a checklist table (Switch × Router) so you can tick off each of the 8 core-to-access links as you verify them in the simulator?
