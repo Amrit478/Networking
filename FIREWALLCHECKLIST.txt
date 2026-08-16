@@ -1,0 +1,65 @@
+## FortiGate Topics (Palo Alto removed)
+
+1. FortiGate Architecture & Modes
+2. Security Policy Configuration
+3. VDOMs (Multi-tenancy)
+4. FortiGuard Services Integration
+5. SSL & IPsec VPN Configuration
+6. IPS, Antivirus & Application Control
+7. Security Zones & Policies
+8. NAT & Routing Configuration
+9. Threat Prevention Profiles
+10. URL Filtering & SSL Decryption
+
+---
+
+## Full Checklist — apply to EACH Fortinet device (Data Center + VIP now; Asia + Support & Sales if you add them)
+
+### 1. Architecture & Mode
+- [ ] Confirm/set NAT/Route mode
+
+### 2. Security Zones
+- [ ] Create internal zone (site-facing interfaces)
+- [ ] Create WAN zone (ISP-facing interface)
+
+### 3. NAT & Routing
+- [ ] Static default route toward ISP-facing next-hop
+- [ ] Confirm internal route to site's supernet
+- [ ] SNAT/overload rule: internal → WAN
+- [ ] DNAT/VIP rules only if exposing an internal server externally
+- [ ] Optional: OSPF peering instead of static, if firewall should join Area 0
+
+### 4. Security Policies
+- [ ] Policy: internal → WAN (allow, logging enabled — `set logtraffic all`)
+- [ ] Policy: WAN → internal (established/related only, or explicit VIP rules)
+- [ ] Confirm implicit deny is active as final rule
+
+### 5. FortiGuard Services
+- [ ] Register device with FortiGuard
+- [ ] Verify AV/IPS/Web Filter databases show "Connected"
+
+### 6. IPS, Antivirus & Application Control
+- [ ] Enable IPS profile → attach to internal↔WAN policy
+- [ ] Enable Antivirus profile → attach to same policy
+- [ ] Enable Application Control profile → attach to same policy
+
+### 7. Threat Prevention Profile
+- [ ] Bundle IPS+AV+AppControl+Botnet C&C blocking into one profile
+- [ ] Attach to outbound policy
+
+### 8. URL Filtering & SSL Decryption
+- [ ] Create Web Filter profile (block malicious/phishing categories)
+- [ ] Create SSL Inspection profile (certificate-inspection or deep-inspection)
+- [ ] Attach both to relevant policies
+
+### 9. VPN
+- [ ] SSL VPN: portal, user group, IP pool, bound to WAN interface
+- [ ] IPsec VPN: Phase 1 (peer/PSK/encryption) + Phase 2 (traffic selectors)
+
+### 10. VDOMs (optional)
+- [ ] Enable multi-VDOM mode
+- [ ] Create additional VDOM if simulating a second tenant on the same box
+
+---
+
+**Recommendation:** finish and verify this full checklist on your **Data Center Fortinet first**, since that's your most built-out site. Once that's solid, decide if you want to add the 2 missing firewalls (Asia, Support & Sales) purely for repetition — that's optional and only worth it if the goal is muscle-memory practice rather than topology completeness, since your VIP site already gives you a second real device to repeat on immediately.
