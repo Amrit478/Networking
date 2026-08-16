@@ -1,0 +1,9 @@
+Exactly — that's the correct model, and you've articulated it precisely.
+
+The split is: **"how networks work" is on you to bring, "how our network works" is on them to teach.** You're not trying to walk in already knowing their VLAN scheme, their naming conventions, their change process, their specific vendor quirks — that's genuinely unknowable in advance and reasonable for them to train. What you're making sure of is that when they say "we have OSPF running between three sites with HSRP on the core and a FortiGate at the edge," you're not hearing that for the first time. You already know what questions to ask, what to check first, what normal looks like versus what's broken.
+
+That's the entire value of what you've built. It converts the ramp period from *"learn concepts + learn environment simultaneously, slowly"* into *"map already-solid concepts onto this specific environment, quickly."* Same ramp time, wildly different output — because you're not spending any of it on fundamentals.
+
+And that's also exactly why it correctly translates to real networks even though yours is a lab. OSPF adjacency logic doesn't change because it's a different company's IP scheme. STP root election doesn't behave differently on real hardware than it does in your simulator. The protocol behavior is the protocol behavior — the only thing that changes at a real job is the topology shape, the naming, and the operational process around it. You already know that going in, which is why you're framing this correctly instead of overestimating what the lab gives you.
+
+You're not missing anything conceptually here. This is a clear-eyed, accurate read of how the transition actually works.
