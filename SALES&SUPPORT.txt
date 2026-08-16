@@ -1,0 +1,132 @@
+Here is your complete, unique, and customized "Hard Mode" master blueprint for the **Support and Sales Site** (shown in image_e4b59d.png).
+
+Unlike the other sites, this topology features an edge router (`R29`), a core distribution switch (`R30`), and two downstream access switches (`R37` and `R38`) handling multiple user endpoints (`VPC59`, `VPC13`, `VPC12`, `VPC11`, and `VPC10`).
+
+To make this a challenging lab that tests all your Layer 2 and Layer 3 modules without overlapping other sites, we will implement redundant cross-links and a distinct IP schema.
+
+---
+
+# Support & Sales Site — Master Blueprint (Hard Mode Lab)
+
+**Supernets:** `10.3.0.0/16` | `2001:DB8:3::/48`
+
+---
+
+### Phase 1: Physical Wiring & "Hard Mode" Topology Changes
+
+To force Spanning Tree loops, trunking, and high-availability protocols into action, modify your canvas wiring as follows:
+
+1. **Edge-to-Core Link:**
+* Keep the single wire between **R29 (WAN Edge)** and **R30 (Core L2 Switch)**. This handles 802.1Q trunking for Router-on-a-Stick.
+
+
+2. **Dual-Path Distribution to Access Switches:**
+* **R30 to R37:** Keep the primary link, and add a second parallel wire to form an **EtherChannel bundle (Port-Channel 1)** using LACP (`mode active`).
+* **R30 to R38:** Keep the primary link, and add a second parallel wire to form an **EtherChannel bundle (Port-Channel 2)** using LACP (`mode active`).
+
+
+3. **Spanning Tree Loop Cross-Connect:**
+* Add a direct physical wire between **R37** and **R38**. This cross-connect creates an intentional physical loop across the distribution layer, forcing MST to actively calculate paths and block redundant ports.
+
+
+
+---
+
+### Phase 2: Layer 2 VLAN & Switch Management Setup
+
+#### 1. The 5 Global VLANs (Modules 3, 6, & 9)
+
+Configure these exact 5 VLANs on **every switch** (`R30`, `R37`, and `R38`):
+
+* **VLAN 99:** Management (`Mgmt`)
+* **VLAN 30:** Sales Primary (`Sales`)
+* **VLAN 31:** Customer Support (`Support`)
+* **VLAN 32:** Billing & Finance (`Billing`)
+* **VLAN 33:** Support Partner (`Partner`)
+
+#### 2. Switch Management IP Addressing (Module 2)
+
+Every switch operates at Layer 2 on VLAN 99, with default gateways pointing up to the edge router:
+
+* **R30 (Core Switch):** `10.3.99.2/24` (Gateway: `10.3.99.1`)
+* **R37 (Access Switch):** `10.3.99.11/24` (Gateway: `10.3.99.1`)
+* **R38 (Access Switch):** `10.3.99.12/24` (Gateway: `10.3.99.1`)
+
+---
+
+### Phase 3: Layer 3 Subinterfaces, DHCP, and Endpoints (Modules 7, 8, 14)
+
+All gateway routing and dynamic address allocation terminate on **R29 (WAN Edge Router)** via subinterfaces.
+
+#### 1. R29 Subinterfaces & DHCP Server Pools
+
+| Subinterface | VLAN & Purpose | IP Address (Gateway) | DHCP Scope Range |
+| --- | --- | --- | --- |
+| `e0/3.99` | **VLAN 99 (Mgmt)** | `10.3.99.1/24` | *Static Only (No DHCP)* |
+| `e0/3.30` | **VLAN 30 (Sales)** | `10.3.30.1/24` | `10.3.30.50` – `10.3.30.200` |
+| `e0/3.31` | **VLAN 31 (Support)** | `10.3.31.1/24` | `10.3.31.50` – `10.3.31.200` |
+| `e0/3.32` | **VLAN 32 (Billing)** | `10.3.32.1/24` | `10.3.32.50` – `10.3.32.200` |
+| `e0/3.33` | **VLAN 33 (Partner)** | `10.3.33.1/24` | `10.3.33.50` – `10.3.33.200` |
+
+#### 2. VPCS Access Ports & Dynamic Allocation
+
+The 5 endpoints connect to the access switches and acquire their addresses automatically through DHCP:
+
+* **VPC59** (Connected to R37): Assigned to VLAN 30 $\rightarrow$ Receives `10.3.30.x`
+* **VPC13** (Connected to R37): Assigned to VLAN 31 $\rightarrow$ Receives `10.3.31.x`
+* **VPC12** (Connected to R38): Assigned to VLAN 32 $\rightarrow$ Receives `10.3.32.x`
+* **VPC11** (Connected to R38): Assigned to VLAN 33 $\rightarrow$ Receives `10.3.33.x`
+* **VPC10** (Connected to R38): Assigned to VLAN 33 $\rightarrow$ Receives `10.3.33.x`
+
+---
+
+### Phase 4: Enterprise Layer 3 Integration (OSPF & Summarization)
+
+To tie the Support & Sales site into the rest of the enterprise topology through the central ISP/WAN cloud:
+
+* **OSPF Area Configuration (Modules 15–17):**
+* Enable OSPF on **R29** pointing toward the WAN cloud in **Area 0**.
+* Use the network statement `network 10.3.0.0 0.0.255.255 area 0`.
+* Ensure `passive-interface` is enabled on all subinterfaces (`e0/3.99` through `e0/3.33`) to prevent OSPF hello chatter from reaching client access ports.
+
+
+* **Route Summarization (Module 19):**
+* Configure OSPF summary routes on **R29** to advertise a clean aggregate supernet (`10.3.0.0/16`) to the rest of the enterprise network.
+
+
+
+
+Acoording to claude the issues are
+
+Same pattern as your other sites — the doc describes a "Hard Mode" topology that's more built-out than what's actually wired in this image. Here's the comparison:
+
+**1. Icon check first**
+
+`R29` and `R30` both show the **sun/star icon** in your image, which in your simulator has consistently meant "router" in the earlier diagrams. But the document calls `R30` a **"Core L2 Switch"**. Same issue as the VIP site — before configuring anything, right-click each node and confirm its actual device type. If `R30` really is a router (not a switch), you can't configure VLANs/trunk ports on it the way Phase 2 describes.
+
+`R37` and `R38` show the switch-style icon (matches the doc's "access switch" role) — those look correct.
+
+**2. EtherChannel bundles — missing**
+
+Doc wants:
+- **R30 ↔ R37:** 2 wires (Port-Channel 1)
+- **R30 ↔ R38:** 2 wires (Port-Channel 2)
+
+Your image shows only **one wire each** (`R30 e0/6 → R37`, `R30 e0/2 → R38`). You need to add a second parallel wire on each of those links before LACP/EtherChannel config means anything.
+
+**3. STP loop cross-connect — missing**
+
+Doc wants a direct wire between **R37 and R38** to create the loop that forces MST to block a port. That link doesn't exist in your image at all right now.
+
+**4. R29–R30 link — matches**
+
+Single wire, correct per the doc (stays as the trunk for Router-on-a-Stick).
+
+**5. VPC placement — matches**
+
+- `VPC59`, `VPC13` → `R37` ✓
+- `VPC12`, `VPC11`, `VPC10` → `R38` ✓
+
+This lines up with the doc's table exactly.
+
+**Bottom line:** confirm the R30 device type first, then add the missing wires — a second R30–R37 link, a second R30–R38 link, and a new R37–R38 cross-connect — before you start on VLANs/EtherChannel/STP config.
