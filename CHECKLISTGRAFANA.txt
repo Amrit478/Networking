@@ -1,0 +1,72 @@
+Good — `10.1.10.12` it is. Now here's the full picture, including a limitation you need to know about before wiring this up.
+
+## The command set (Cisco IOS — apply on every router/switch)
+
+```
+logging host 10.1.10.12
+logging trap informational
+logging source-interface vlan99
+service timestamps log datetime msec
+
+snmp-server community NETMON-RO RO
+snmp-server host 10.1.10.12 version 2c NETMON-RO
+snmp-server enable traps
+snmp-server source-interface traps vlan99
+```
+
+Notes:
+- `logging trap informational` sets the severity level sent (0=emergencies through 7=debugging; informational=6 is a reasonable default — go to `debugging` only if you want everything).
+- `logging source-interface vlan99` makes sure the syslog packets always show your device's management IP as the source, not whatever interface the route happens to go out — critical for telling devices apart in the logs.
+- Swap `vlan99` for the correct SVI/loopback name per device type (some devices use `interface vlan 99`, routers use their subinterface name or a loopback).
+- Change the SNMP community string (`NETMON-RO`) to whatever you've actually configured on the Linux collector — it must match exactly.
+
+---
+
+## Per-device checklist
+
+### Data Center — 6 devices (R4, R5, R7, R9, R8, R6)
+- [ ] R4 — `logging host 10.1.10.12`, source-interface = whatever SVI/loopback carries its mgmt IP
+- [ ] R5 — same
+- [ ] R7 — same (source-interface vlan99)
+- [ ] R9 — same
+- [ ] R8 — same
+- [ ] R6 — same
+
+*(These are all local to the Data Center subnet, so no OSPF dependency — logs should flow immediately.)*
+
+### Asia Engineering — 10 devices (R27, R31, R32–R41)
+- [ ] R31 (edge router) — source-interface likely a loopback or `e0/0.99`
+- [ ] R27, R32, R33, R34, R35, R36, R39, R40, R41 — each `logging host 10.1.10.12`, source-interface vlan99
+
+### Support & Sales — 4 devices (R29, R30, R37, R38)
+- [ ] R29 (edge router)
+- [ ] R30, R37, R38
+
+### VIP Executive — 2 devices (R42, R18)
+- [ ] R42 (edge router)
+- [ ] R18
+
+**Total: 22 infrastructure devices need this config.**
+
+---
+
+## The DHCP / VPC problem
+
+Here's the catch: your VPCs are **VPCS nodes** (Virtual PC Simple) — lightweight stand-ins used in GNS3/Packet Tracer, not real operating systems. They don't have a syslog daemon, don't run SNMP, and **cannot be configured to send logs anywhere.** There's no command you can run on a VPCS to fix this — it's a hard capability limit of the node type, not a config gap.
+
+What this means practically:
+- Your **routers and switches** (the 22 infrastructure devices above) can and will send full logs/traps to `10.1.10.12` — this covers interface up/down, STP changes, EtherChannel state, config changes, HSRP, OSPF neighbor events, etc. This is genuinely the majority of what you'd want to monitor in a network-ops sense anyway.
+- Your **VPCs will never appear as log sources** — they're end-user simulation nodes, not monitored endpoints. If you specifically need endpoint-level logging (e.g. simulating a workstation reporting to a SIEM), you'd need to swap one or two VPCS nodes for actual Linux or Windows VM nodes in your simulator, which support a real syslog client — but that's a bigger topology change, not a config tweak.
+
+So the honest scope of "every device sends logs" is **every infrastructure device**, not the VPCs.
+
+---
+
+## One dependency before any of this works
+
+None of these logging/SNMP packets will reach `10.1.10.12` until:
+1. All the wiring gaps from the earlier checklist are closed
+2. OSPF is fully configured and adjacencies are up across all sites + the ISP cloud
+3. Route summarization is working so each site can actually route toward `10.1.0.0/16`
+
+Test with a simple `ping 10.1.10.12` from each site's edge router first — if that succeeds, the logging/SNMP commands will work immediately after being applied.
