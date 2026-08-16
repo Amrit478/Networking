@@ -1,0 +1,143 @@
+Here's the complete wiring-only checklist — every link across all sites and the ISP cloud, marked as done or still needed, based on everything we've reviewed so far.
+
+## SITE 1 — Data Center
+
+**Firewall to Core Routers**
+- [x] Fortinet `port2` ↔ R4 `e0/0` — DONE
+- [x] Fortinet `port3` ↔ R5 `e0/3` — DONE
+
+**Core to Access Switches (full mesh — 8 links)**
+- [x] R4 ↔ R7 — appears DONE (verify in sim)
+- [x] R4 ↔ R9 — appears DONE (verify in sim)
+- [x] R4 ↔ R8 — appears DONE (verify in sim)
+- [x] R4 ↔ R6 — appears DONE (verify in sim)
+- [x] R5 ↔ R7 — appears DONE (verify in sim)
+- [x] R5 ↔ R9 — appears DONE (verify in sim)
+- [x] R5 ↔ R8 — appears DONE (verify in sim)
+- [x] R5 ↔ R6 — appears DONE (verify in sim)
+
+**Multi-homed Linux Servers**
+- [x] Linux15 → multiple switches — appears DONE (verify NIC count)
+- [x] Linux14 → multiple switches — appears DONE (verify NIC count)
+- [x] Linux → multiple switches — appears DONE (verify NIC count)
+- [x] Linux17 → multiple switches — appears DONE (verify NIC count)
+- [x] Linux18 → multiple switches — appears DONE (verify NIC count)
+
+**Status: Wiring looks complete. Needs manual link-count audit only, no new wires expected.**
+
+---
+
+## SITE 2 — Asia Engineering
+
+**Router–Core Trunk**
+- [x] R31 ↔ R27 — DONE (single wire, correct)
+
+**EtherChannel Bundles (need 2 wires each — currently only 1 each)**
+- [x] R27 ↔ R32 — 1st wire DONE
+- [ ] R27 ↔ R32 — 2nd wire STILL NEEDED
+- [x] R27 ↔ R34 — 1st wire DONE
+- [ ] R27 ↔ R34 — 2nd wire STILL NEEDED
+- [x] R27 ↔ R41 — 1st wire DONE
+- [ ] R27 ↔ R41 — 2nd wire STILL NEEDED
+- [x] R27 ↔ R35 — 1st wire DONE
+- [ ] R27 ↔ R35 — 2nd wire STILL NEEDED
+
+**STP Loop Cross-Connects (none exist yet)**
+- [ ] R32 ↔ R33 — STILL NEEDED
+- [ ] R33 ↔ R34 — STILL NEEDED
+- [ ] R41 ↔ R40 — STILL NEEDED
+- [ ] R40 ↔ R36 — STILL NEEDED
+- [ ] R35 ↔ R39 — STILL NEEDED
+
+**VPC Endpoints (already correctly placed)**
+- [x] VPC46 → R32 — DONE
+- [x] VPC16 → R34 — DONE
+- [x] VPC23 → R41 — DONE
+- [x] VPC22 → R35 — DONE
+- [x] VPC25 → R39 — DONE
+
+**Status: 9 wires still needed (4 EtherChannel 2nd-links + 5 STP cross-connects).**
+
+---
+
+## SITE 3 — Support & Sales
+
+**Edge–Core Trunk**
+- [x] R29 ↔ R30 — DONE (single wire, correct)
+
+**EtherChannel Bundles (need 2 wires each — currently only 1 each)**
+- [x] R30 ↔ R37 — 1st wire DONE
+- [ ] R30 ↔ R37 — 2nd wire STILL NEEDED
+- [x] R30 ↔ R38 — 1st wire DONE
+- [ ] R30 ↔ R38 — 2nd wire STILL NEEDED
+
+**STP Loop Cross-Connect**
+- [ ] R37 ↔ R38 — STILL NEEDED (does not exist yet)
+
+**VPC Endpoints (already correctly placed)**
+- [x] VPC59 → R37 — DONE
+- [x] VPC13 → R37 — DONE
+- [x] VPC12 → R38 — DONE
+- [x] VPC11 → R38 — DONE
+- [x] VPC10 → R38 — DONE
+
+**Outstanding check**
+- [ ] Confirm R30's actual device type (doc calls it a switch; icon looked like a router in your image) — CHECK NEEDED
+
+**Status: 3 wires still needed (2 EtherChannel 2nd-links + 1 STP cross-connect).**
+
+---
+
+## SITE 4 — VIP Executive
+
+**Firewall–Switch–Router Chain**
+- [x] Fortinet `port1` ↔ R18 `e3/0` — DONE
+- [x] R18 `e0/1` ↔ R42 `e0/0` — DONE (trunk)
+
+**VPC Endpoints — currently wired wrong per "Hard Mode" intent**
+- [x] VPC49 → R42 (direct to router port) — DONE, but not VLAN/trunk practice
+- [x] VPC50 → R42 (direct to router port) — DONE, but not VLAN/trunk practice
+- [x] VPC58 → R42 (direct to router port) — DONE, but not VLAN/trunk practice
+- [x] VPC57 → R42 (direct to router port) — DONE, but not VLAN/trunk practice
+
+**Outstanding decision + check**
+- [ ] Confirm actual device type of R42 vs R18 (icons looked swapped vs. doc's intent) — CHECK NEEDED
+- [ ] DECISION: rewire all 4 VPCs from R42 ports onto R18 access ports instead, if you want genuine trunk/VLAN testing — OPTIONAL REWIRE
+
+**Status: Wiring is physically complete as-is, but doesn't fully exercise trunking unless you do the optional VPC rewire onto R18.**
+
+---
+
+## PHASE B — Central ISP/WAN Cloud (nothing built yet)
+
+**New Devices**
+- [ ] Add `ISP-Core1` (Cisco IOL L3) — STILL NEEDED
+- [ ] Add `ISP-Core2` (Cisco IOL L3) — STILL NEEDED
+- [ ] Place both centrally on canvas, separate from the 4 site pods — STILL NEEDED
+
+**Backbone Link**
+- [ ] `ISP-Core1 (e0/0)` ↔ `ISP-Core2 (e0/0)` — STILL NEEDED
+
+**Site-to-ISP Links**
+- [ ] `R4 (e0/10)` ↔ `ISP-Core1 (e0/1)` — STILL NEEDED
+- [ ] `R5 (e0/7)` ↔ `ISP-Core2 (e0/1)` — STILL NEEDED
+- [ ] `R31 (next free port)` ↔ `ISP-Core1 (e0/2)` — STILL NEEDED
+- [ ] `R29 (e0/0 or next free)` ↔ `ISP-Core1 (e0/3)` — STILL NEEDED
+- [ ] `R42 (e0/4 or next free)` ↔ `ISP-Core2 (e0/2)` — STILL NEEDED
+
+**Status: 8 wires + 2 new devices, none of it built yet.**
+
+---
+
+## GRAND TOTAL — WIRES STILL NEEDED
+
+| Site | Wires Missing |
+|---|---|
+| Data Center | 0 (audit only) |
+| Asia Engineering | 9 |
+| Support & Sales | 3 |
+| VIP Executive | 0 (optional rewire only) |
+| ISP Cloud | 8 (+ 2 new devices) |
+| **Total new wires to add** | **20** |
+
+Once these 20 links are in place (and the two device-type checks confirmed on R30 and R42/R18), your full physical topology matches every blueprint. IP addressing and protocol config are entirely separate next steps after that.
