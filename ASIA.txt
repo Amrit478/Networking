@@ -89,5 +89,30 @@ To tie Asia into the rest of your corporate topology (Data Center, Sales, VIP) t
 * Ensure `passive-interface` is configured on R31's subinterfaces (`e0/0.99` through `e0/0.103`) so routing hello packets are never leaked down to the local access switches or user PCs.
 
 
+Mismatch according to claude
+
+This is basically the same wiring plan as before, just repackaged into a fuller "master blueprint" with OSPF/routing added on top (Phase 4). The physical topology requirements haven't changed:
+
+**Still the same wiring gaps vs. your image:**
+
+1. **EtherChannels missing** — R27 still needs **2 wires each** to R32, R34, R41, R35 (Port-Channels 1–4). Your image shows single wires only.
+2. **STP loop links missing** — still need:
+   - R32 ↔ R33, R33 ↔ R34
+   - R41 ↔ R40, R40 ↔ R36
+   - R35 ↔ R39
+   
+   None of these cross-connects exist in your current topology yet.
+3. **R31–R27 link** — matches, no change needed.
+
+**What's new in this version (doesn't affect wiring, just config scope):**
+
+- **Phase 4 (OSPF)** is new — this is purely a config task on R31, not a wiring change. It has R31 running OSPF Area 0 toward the WAN/ISP cloud, with `passive-interface` on all the VLAN subinterfaces (so hellos don't leak to your access switches/PCs), plus route summarization advertising `10.2.0.0/16` outward.
+- Everything else (VLANs, DHCP scopes, management IPs, VPC assignments) is identical to the previous document, just reformatted.
+
+**Bottom line:** the picture you uploaded still hasn't changed — it's the same plain star. This new document doesn't require you to redo wiring differently than before; it just adds Layer 3/OSPF configuration on top once the Layer 2 physical wiring (EtherChannels + STP triangles) is actually built.
+
+Want the port-by-port wiring map now, or the OSPF config lines for R31 first?
+
+
 * **Route Summarization (Module 19):**
 * On R31, configure OSPF summary routes outward toward the WAN cloud so it advertises a single clean supernet (`10.2.0.0/16`) to the Data Center and other branch sites, keeping core routing tables optimized.
