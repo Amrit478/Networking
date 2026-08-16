@@ -1,0 +1,151 @@
+Here is your complete, master IP addressing blueprint for all four sites integrated into a single unified list. This document covers every node, VLAN, and point-to-point link in your topology, setting you up perfectly to deploy OSPF, BGP, and DHCP without any overlapping subnet issues.
+
+---
+
+## 1. Data Center (Site 1) — 100% Static Addressing
+
+**Supernets:** `10.1.0.0/16` | `2001:DB8:1::/48`
+
+In the Data Center, everything is static. Since you have two Core L3 Routers/Switches (`R4` and `R5`), they act as redundant gateways for your Linux servers using HSRP/VRRP. The Virtual IP is `.1`, `R4` is `.2`, and `R5` is `.3`.
+
+### Point-to-Point Links (Core Routers to Firewall)
+
+| Node | Interface | Connection | IPv4 Address (/30) | IPv6 Address (/127) |
+| --- | --- | --- | --- | --- |
+| **R4 (Core 1)** | `e0/x` | To Firewall | `10.1.255.1` | `2001:DB8:1:255::1` |
+| **Firewall** | `port2` | To R4 | `10.1.255.2` | `2001:DB8:1:255::2` |
+| **R5 (Core 2)** | `e0/y` | To Firewall | `10.1.255.5` | `2001:DB8:1:255::4` |
+| **Firewall** | `port3` | To R5 | `10.1.255.6` | `2001:DB8:1:255::5` |
+
+### Core Router SVIs (Default Gateways for Linux & Switches)
+
+| VLAN & Purpose | R4 (Core 1) IP | R5 (Core 2) IP | HSRP Virtual IP (Gateway) | IPv6 Virtual Gateway (/64) |
+| --- | --- | --- | --- | --- |
+| **VLAN 10 (Web/App)** | `10.1.10.2/24` | `10.1.10.3/24` | **`10.1.10.1`** | `2001:DB8:1:10::1` |
+| **VLAN 20 (DB/Mon)** | `10.1.20.2/24` | `10.1.20.3/24` | **`10.1.20.1`** | `2001:DB8:1:20::1` |
+| **VLAN 99 (Mgmt)** | `10.1.99.2/24` | `10.1.99.3/24` | **`10.1.99.1`** | `2001:DB8:1:99::1` |
+
+### Access Switches & Linux Servers
+
+| Node | VLAN | IPv4 Address (/24) | IPv6 Address (/64) | Gateway |
+| --- | --- | --- | --- | --- |
+| **R7 (Switch)** | 99 | `10.1.99.11` | `2001:DB8:1:99::11` | `10.1.99.1` |
+| **R9 (Switch)** | 99 | `10.1.99.12` | `2001:DB8:1:99::12` | `10.1.99.1` |
+| **R8 (Switch)** | 99 | `10.1.99.13` | `2001:DB8:1:99::13` | `10.1.99.1` |
+| **R6 (Switch)** | 99 | `10.1.99.14` | `2001:DB8:1:99::14` | `10.1.99.1` |
+| **Linux 15** | 10 | `10.1.10.10` | `2001:DB8:1:10::10` | `10.1.10.1` |
+| **Linux 14** | 10 | `10.1.10.11` | `2001:DB8:1:10::11` | `10.1.10.1` |
+| **Linux** | 10 | `10.1.10.12` | `2001:DB8:1:10::12` | `10.1.10.1` |
+| **Linux 17** | 20 | `10.1.20.10` | `2001:DB8:1:20::10` | `10.1.20.1` |
+| **Linux 18** | 20 | `10.1.20.11` | `2001:DB8:1:20::11` | `10.1.20.1` |
+
+---
+
+## 2. Asia Engineering (Site 2) — Dynamic/DHCP Edge
+
+**Supernets:** `10.2.0.0/16` | `2001:DB8:2::/48`
+
+A WAN Edge Router (`R31`) passes traffic to a Core L3 Switch (`R27`), which handles inter-VLAN routing and acts as the DHCP server for the 5 VPCS endpoints.
+
+### Point-to-Point Link (WAN Edge to Core Switch)
+
+| Node | Interface | Connection | IPv4 Address (/30) | IPv6 Address (/127) |
+| --- | --- | --- | --- | --- |
+| **R31 (WAN Edge)** | `e0/0` | To R27 Core | `10.2.255.1` | `2001:DB8:2:255::1` |
+| **R27 (Core L3)** | `e0/0` | To R31 WAN | `10.2.255.2` | `2001:DB8:2:255::2` |
+
+### Core Switch (`R27`) SVIs (The Default Gateways)
+
+| VLAN & Purpose | R27 SVI IP (Gateway) | IPv6 Gateway (/64) | DHCP Pool Range Provided by R27 |
+| --- | --- | --- | --- |
+| **VLAN 100 (Dev)** | `10.2.100.1/24` | `2001:DB8:2:100::1` | `10.2.100.50` - `10.2.100.200` |
+| **VLAN 101 (Test)** | `10.2.101.1/24` | `2001:DB8:2:101::1` | `10.2.101.50` - `10.2.101.200` |
+| **VLAN 99 (Mgmt)** | `10.2.99.1/24` | `2001:DB8:2:99::1` | *(Static IPs only for switches)* |
+
+### Access Switches (Static)
+
+| Node | VLAN | IPv4 Address (/24) | Gateway |
+| --- | --- | --- | --- |
+| **R32 to R41 (8 Switches)** | 99 | `10.2.99.11` to `10.2.99.18` | `10.2.99.1` |
+
+### The 5 VPCS Endpoints (DHCP)
+
+| Node | Assigned VLAN (Access Port) | Expected IP (Via DHCP) |
+| --- | --- | --- |
+| **VPC46, VPC16** | 100 (Dev) | `10.2.100.x` |
+| **VPC23, VPC22, VPC25** | 101 (Test) | `10.2.101.x` |
+
+---
+
+## 3. Support and Sales (Site 3) — Dynamic/DHCP Edge
+
+**Supernets:** `10.3.0.0/16` | `2001:DB8:3::/48`
+
+This site consists of a Firewall, a WAN Edge Router (`R28`), a Core L3 Router/Switch (`R42`), 2 Access Switches, and 5 VPCs. `R42` will handle the SVIs and DHCP.
+
+### Point-to-Point Links (Firewall to Edge to Core)
+
+| Node | Connection | IPv4 Address (/30) | IPv6 Address (/127) |
+| --- | --- | --- | --- |
+| **Firewall** | To R28 Edge | `10.3.255.1` | `2001:DB8:3:255::1` |
+| **R28 (Edge)** | To Firewall | `10.3.255.2` | `2001:DB8:3:255::2` |
+| **R28 (Edge)** | To R42 Core | `10.3.255.5` | `2001:DB8:3:255::4` |
+| **R42 (Core)** | To R28 Edge | `10.3.255.6` | `2001:DB8:3:255::5` |
+
+### Core Router (`R42`) SVIs (The Default Gateways)
+
+| VLAN & Purpose | R42 SVI IP (Gateway) | IPv6 Gateway (/64) | DHCP Pool Range Provided by R42 |
+| --- | --- | --- | --- |
+| **VLAN 30 (Sales)** | `10.3.30.1/24` | `2001:DB8:3:30::1` | `10.3.30.50` - `10.3.30.200` |
+| **VLAN 31 (Support)** | `10.3.31.1/24` | `2001:DB8:3:31::1` | `10.3.31.50` - `10.3.31.200` |
+| **VLAN 99 (Mgmt)** | `10.3.99.1/24` | `2001:DB8:3:99::1` | *(Static IPs only for switches)* |
+
+### Access Switches (Static)
+
+| Node | VLAN | IPv4 Address (/24) | Gateway |
+| --- | --- | --- | --- |
+| **SW-Sales1** | 99 | `10.3.99.11` | `10.3.99.1` |
+| **SW-Sales2** | 99 | `10.3.99.12` | `10.3.99.1` |
+
+### The 5 VPCS Endpoints (DHCP)
+
+| Node | Assigned VLAN (Access Port) | Expected IP (Via DHCP) |
+| --- | --- | --- |
+| **VPC49, VPC58, VPC50** | 30 (Sales) | `10.3.30.x` |
+| **VPC57, VPC51** | 31 (Support) | `10.3.31.x` |
+
+---
+
+## 4. VIP Executive (Site 4) — Dynamic/DHCP Edge
+
+**Supernets:** `10.4.0.0/16` | `2001:DB8:4::/48`
+
+This site consists of 1 Firewall, 1 Edge Router, 1 Access Switch, and 4 VPCs. Because there is only one router, you will use **Router-on-a-Stick (Module 8)** to handle the VLAN gateways using Subinterfaces (e.g., `e0/1.40`).
+
+### Point-to-Point Link (Firewall to Edge Router)
+
+| Node | Connection | IPv4 Address (/30) | IPv6 Address (/127) |
+| --- | --- | --- | --- |
+| **Firewall** | To VIP Router | `10.4.255.1` | `2001:DB8:4:255::1` |
+| **VIP Router** | To Firewall | `10.4.255.2` | `2001:DB8:4:255::2` |
+
+### VIP Router Subinterfaces (Router-on-a-Stick Gateways)
+
+| Interface (VLAN) | Subinterface IP (Gateway) | IPv6 Gateway (/64) | DHCP Pool Range Provided by Router |
+| --- | --- | --- | --- |
+| **e0/1.40 (VIP PC)** | `10.4.40.1/24` | `2001:DB8:4:40::1` | `10.4.40.50` - `10.4.40.200` |
+| **e0/1.99 (Mgmt)** | `10.4.99.1/24` | `2001:DB8:4:99::1` | *(Static IPs only for switches)* |
+
+### Access Switch (Static)
+
+| Node | VLAN | IPv4 Address (/24) | Gateway |
+| --- | --- | --- | --- |
+| **SW-VIP1** | 99 | `10.4.99.11` | `10.4.99.1` |
+
+### The 4 VPCS Endpoints (DHCP)
+
+| Node | Assigned VLAN (Access Port) | Expected IP (Via DHCP) |
+| --- | --- | --- |
+| **VPC-VIP1 to VIP4** | 40 (VIP PC) | `10.4.40.x` |
+
+
