@@ -1,0 +1,122 @@
+To make your **VIP Executive Site** (shown in image_e4c463.png) a proper "Hard Mode" lab that tests advanced Layer 2/Layer 3 concepts (Router-on-a-Stick, multiple VLANs, security features, and OSPF routing), we need to optimize its design.
+
+Looking at your canvas, you have **1 Fortinet Firewall**, **1 Access Switch (`R18`)**, **1 Router (`R42`)**, and **4 VPCs (`VPC49, VPC50, VPC58, VPC57`)**. To make this hard and feature-rich, we will configure `R42` to act as your core router handling Router-on-a-Stick across multiple VLANs, while `R18` serves as the secure edge switch.
+
+Here is your complete, master "Hard Mode" blueprint for the VIP Executive Site.
+
+---
+
+# VIP Executive Site — Master Blueprint (Hard Mode Lab)
+
+**Supernets:** `10.4.0.0/16` | `2001:DB8:4::/48`
+
+---
+
+### Phase 1: Physical Wiring & Topology Design
+
+To ensure proper segmentation and allow you to practice trunking and security features:
+
+1. **Firewall to Switch Link:**
+* Connect **Fortinet Firewall (`port1`)** to **Switch (`R18`)** on interface `e3/0`. This acts as your secure external/WAN boundary trunk.
+
+
+2. **Switch to Router Link:**
+* Connect **Switch (`R18`)** on interface `e0/1` to **Router (`R42`)** on interface `e0/0`. Configure this single physical wire as an 802.1Q trunk to support **Router-on-a-Stick (Module 8)**.
+
+
+3. **The 4 VPC Endpoints:**
+* Connect **VPC49**, **VPC50**, **VPC58**, and **VPC57** directly into `R42` ports (`e0/2`, `e0/1`, `e0/3`, and `e0/10`) to simulate multi-VLAN user edge ports.
+
+
+
+---
+
+### Phase 2: Layer 2 VLAN & Switch Management Setup
+
+#### 1. The 4 Global VLANs (Modules 3, 6, & 9)
+
+Configure these VLANs on switch `R18`:
+
+* **VLAN 99:** Management (`Mgmt`)
+* **VLAN 40:** Executive VIP Data (`Exec`)
+* **VLAN 41:** VIP Secure Sandbox (`Sandbox`)
+* **VLAN 42:** VIP Guest (`Guest`)
+
+#### 2. Switch Management IP Addressing (Module 2)
+
+* **Switch `R18` Management IP:** `10.4.99.11/24` on VLAN 99.
+* **Default Gateway:** Set `ip default-gateway 10.4.99.1` on `R18`.
+
+---
+
+### Phase 3: Layer 3 Subinterfaces, DHCP, and Routing (Modules 8, 14, 15–17)
+
+All default gateways, DHCP pools, and dynamic routing terminate on **Router `R42**` using subinterfaces.
+
+#### 1. Router `R42` Subinterfaces & DHCP Server Pools
+
+| Subinterface | VLAN & Purpose | IP Address (Gateway) | DHCP Scope Range |
+| --- | --- | --- | --- |
+| `e0/0.99` | **VLAN 99 (Mgmt)** | `10.4.99.1/24` | *Static Only (No DHCP)* |
+| `e0/0.40` | **VLAN 40 (Exec)** | `10.4.40.1/24` | `10.4.40.50` – `10.4.40.200` |
+| `e0/0.41` | **VLAN 41 (Sandbox)** | `10.4.41.1/24` | `10.4.41.50` – `10.4.41.200` |
+| `e0/0.42` | **VLAN 42 (Guest)** | `10.4.42.1/24` | `10.4.42.50` – `10.4.42.200` |
+
+#### 2. VPCS Access Ports & Dynamic Allocation (Module 7)
+
+The executive endpoints pull their configurations automatically via DHCP through Router `R42`:
+
+* **VPC49** (Connected to R42 `e0/2`): Assigned to VLAN 40 $\rightarrow$ Receives `10.4.40.x`
+* **VPC50** (Connected to R42 `e0/1`): Assigned to VLAN 40 $\rightarrow$ Receives `10.4.40.x`
+* **VPC58** (Connected to R42 `e0/3`): Assigned to VLAN 41 $\rightarrow$ Receives `10.4.41.x`
+* **VPC57** (Connected to R42 `e0/10`): Assigned to VLAN 42 $\rightarrow$ Receives `10.4.42.x`
+
+---
+
+### Phase 4: Enterprise Layer 3 Integration (OSPF & Summarization)
+
+To tie the VIP site into your Data Center and other branch networks via the central ISP/WAN cloud:
+
+* **OSPF Area Configuration (Modules 15–17):**
+* Enable OSPF on Router `R42` pointing toward the firewall and core WAN cloud in **Area 0**.
+* Use the network statement `network 10.4.0.0 0.0.255.255 area 0`.
+* Configure `passive-interface` on all subinterfaces (`e0/0.99`, `e0/0.40`, `e0/0.41`, `e0/0.42`) to prevent routing protocol traffic from bleeding into user-facing subnets.
+
+
+* **Route Summarization (Module 19):**
+* Configure OSPF summary advertisements on Router `R42` to advertise a single clean supernet (`10.4.0.0/16`) to the rest of the enterprise topology.
+
+
+
+
+Mismatch according to claude 
+
+
+Let me walk through this one carefully, because there are a couple of things worth flagging before you start wiring.
+
+**1. Wiring topology — mostly matches, with one mismatch**
+
+Document says:
+- Firewall → `R18` (switch) on `e3/0`
+- `R18` → `R42` (router) on `e0/1` → `e0/0`, as a trunk
+- 4 VPCs → directly into `R42` ports `e0/2`, `e0/1`, `e0/3`, `e0/10`
+
+Your image shows:
+- Firewall (`Fortios`) → `R18` on `port1` → `e3/0` ✓ matches
+- `R18` `e0/1` → `R42` `e0/0` ✓ matches
+- 4 VPCs (`VPC49`, `VPC50`, `VPC58`, `VPC57`) → `R42` on ports `e0/3`, `e0/1`, `e0/2`, `e0/0` — **close, but check the exact port numbers against the table**, since the doc specifies `e0/2, e0/1, e0/3, e0/10` for `VPC49, VPC50, VPC58, VPC57` respectively. Your image's port labels look slightly different (e.g., `e0/3`, `e0/1`, `e0/2`, `e0/0`) — worth double-checking each cable against the table before you start configuring, since a mismatch there will make your DHCP/VLAN assignments land on the wrong interface.
+
+**2. Icon mismatch — worth double-checking which device is which**
+
+In your earlier Asia Engineering diagram, the **sun/star icon** was used for the **router** (`R31`), and the **rack/multi-line icon** was used for the **switch** (`R27`).
+
+In this image, `R42` appears to have the **switch-style icon**, and `R18` has the **sun/router-style icon** — the opposite of what the document assigns (document says `R42` = router, `R18` = switch). Before you configure anything, confirm in your simulator which device type each node actually is (right-click → check model, or look at the interface list). If the icons are swapped from the doc's intent, you'd end up trying to run subinterfaces and DHCP pools on a device that's actually a Layer 2 switch, which won't work.
+
+**3. A logical design flaw in Phase 1, point 3**
+
+This part doesn't quite work as "Hard Mode" practice: **connecting the 4 VPCs directly into the router's physical ports** means each VPC sits on its own dedicated interface — there's no VLAN tagging or trunking happening on those links at all. Router-on-a-Stick and 802.1Q subinterfaces only matter on the **single trunk link** between the switch and the router (which here is just the `R18`–`R42` link). Plugging PCs straight into router ports is actually the *opposite* of what tests trunking — it's old-school "router with multiple physical interfaces," not VLAN segmentation.
+
+If the goal is genuine "Hard Mode" VLAN/trunk practice, the 4 VPCs should instead plug into **access ports on switch `R18`**, each assigned to a different VLAN (40, 41, 41, 42), with the single `R18`–`R42` link carrying all VLANs as an 802.1Q trunk. That way DHCP requests from each VPC actually have to get tagged, cross the trunk, hit the correct subinterface on `R42`, and get answered — which is the real point of Router-on-a-Stick.
+
+Want me to rewrite Phase 1 and the VPC port table so the 4 VPCs connect to `R18` instead, with the correct access-port VLAN assignments?
+
