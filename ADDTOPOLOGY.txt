@@ -1,0 +1,110 @@
+To interconnect all four independent site topologies (Data Center, Asia Engineering, Support & Sales, and VIP Executive) into a single unified enterprise network, you need to simulate a **Central WAN / ISP Cloud** using **Cisco IOL L3 (Layer 3) images**.
+
+---
+
+### Step 1: How Many Cisco IOL L3 Devices Do You Need?
+
+You need **2 Cisco IOL L3 routers** to act as your core service provider / WAN backbone cloud.
+
+* Let's name them: **`ISP-Core1`** and **`ISP-Core2`** (or `R100` and `R101`).
+
+* These two routers will form a high-speed point-to-point transit link between each other and accept connections from the edge router of every single site.
+
+---
+
+### Step 2: Where Do You Place Them on the Canvas?
+
+Place `ISP-Core1` and `ISP-Core2` right in the middle or top-center of your workspace, creating a distinct "Cloud" hub separate from your 4 localized site pods (Data Center, Asia, Support & Sales, VIP).
+
+---
+
+### Step 3: Connection Blueprint & IP Addressing Table
+
+To tie everything together cleanly without overlapping any of your existing subnets, we will use a dedicated **WAN Transit Subnet block (`10.255.0.0/16`)** for all inter-site and provider links.
+
+#### 1. Inter-ISP Backbone Link (Core to Core)
+
+* **Connection:** `ISP-Core1` (`e0/0`) $\leftrightarrow$ `ISP-Core2` (`e0/0`)
+
+* **IPv4 Address Block:** `10.255.255.0/30`
+
+* `ISP-Core1` (`e0/0`): `10.255.255.1/30`
+
+* `ISP-Core2` (`e0/0`): `10.255.255.2/30`
+
+#### 2. Site Edge Routers to Central ISP Cloud
+
+Connect each site's existing border/gateway router directly into `ISP-Core1` or `ISP-Core2`:
+
+| Site Name | Site Edge Router & Interface | Connects to ISP Router & Interface | Point-to-Point WAN Subnet (`/30`) | Site Supernet Advertised into OSPF |
+
+| --- | --- | --- | --- | --- |
+
+| **Data Center (Site 1)** | `R4` (`e0/10`) <br>
+
+<br> `R5` (`e0/7`) | `ISP-Core1` (`e0/1`) <br>
+
+<br> `ISP-Core2` (`e0/1`) | `10.255.1.0/30` <br>
+
+<br> `10.255.1.4/30` | `10.1.0.0/16` |
+
+| **Asia Engineering** | `R31` (`e0/1` or next free) | `ISP-Core1` (`e0/2`) | `10.255.2.0/30` | `10.2.0.0/16` |
+
+| **Support & Sales** | `R29` (`e0/0` or next free) | `ISP-Core1` (`e0/3`) | `10.255.3.0/30` | `10.3.0.0/16` |
+
+| **VIP Executive** | `R42` (`e0/4` or next free) | `ISP-Core2` (`e0/2`) | `10.255.4.0/30` | `10.4.0.0/16` |
+
+---
+
+### Step 4: Unified OSPF Routing Configuration
+
+To make every site fully reachable across the entire enterprise topology, run **OSPF Area 0** across the central ISP cloud and all site edge routers.
+
+1. **On `ISP-Core1` and `ISP-Core2`:**
+
+```text
+
+router ospf 1
+
+ router-id 1.1.1.1 (or 2.2.2.2)
+
+ network 10.255.0.0 0.0.255.255 area 0
+
+```
+
+2. **On Site Edge Routers (`R4`, `R5`, `R31`, `R29`, `R42`):**
+
+* Ensure that in addition to their internal network statements, they also participate in OSPF over their respective WAN interfaces pointing to the ISP cloud.
+
+* Because you configured route summarization on each edge router earlier, **each site will cleanly inject only its aggregate supernet** (`10.1.0.0/16`, `10.2.0.0/16`, `10.3.0.0/16`, and `10.4.0.0/16`) into the central OSPF domain, keeping routing tables optimized across the entire enterprise.
+
+According to claude ai what is missing
+
+
+No — this image just shows your **four existing site pods** sitting side by side on the canvas. The document you just posted is describing the *next step you still need to do*: building the central ISP/WAN cloud and cabling it in. None of that exists yet in what you uploaded.
+
+Here's the actual state:
+
+**1. No ISP-Core1 / ISP-Core2 devices present**
+The document tells you to add **2 new Cisco IOL L3 routers** as the central cloud. I don't see any device between or above your four pods that looks like a new standalone router — your canvas still shows just the 4 independent clusters, disconnected from each other.
+
+**2. No inter-site links exist yet**
+Looking at the image, none of the four pods have any wire leaving their own cluster to connect to another pod or to a central hub. Each site is still fully isolated — exactly as expected before you've done this step.
+
+**3. Site-internal wiring still has open items from before**
+Worth remembering — even setting the ISP cloud aside, your earlier sites still had gaps flagged:
+- **Asia Engineering** — still missing the 4 EtherChannel second-links and the 3 STP cross-connects
+- **VIP Executive** — icon/device-type mismatch unresolved, and VPCs still wired to router ports instead of switch access ports
+- **Support & Sales** — still missing the second R30–R37 wire, second R30–R38 wire, and the R37–R38 cross-connect
+- **Data Center** — looked complete, just needs a manual link audit
+
+**4. IP addressing** — nothing in this image relates to IPs at all; that's all still config work to be done once wiring exists, per each site's Phase 2/3 tables and now Step 3 of this WAN document.
+
+**So to answer directly: no, the topology isn't complete, and no IPs have been applied yet.** What you have now is 4 isolated pods, several of which still have incomplete internal wiring. The remaining work is:
+
+1. Finish the internal wiring gaps on Asia, VIP, and Support & Sales
+2. Add `ISP-Core1` and `ISP-Core2` to the canvas
+3. Wire the inter-ISP backbone link and the 5 site-edge-to-ISP links per the table
+4. Then apply all the IP addressing (site-internal *and* the new `10.255.x.x` WAN transit subnets) and OSPF config
+
+Want a single master checklist across all 4 sites + the new ISP cloud so you can track what's wired vs. still missing in one place?
