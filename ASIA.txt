@@ -1,81 +1,93 @@
-To truly master these Layer 2 and Layer 3 skills, you need a topology that forces protocols to actually do their jobs. In a simple star topology, Spanning Tree (STP) has nothing to block, and EtherChannel isn't necessary.
-
-By adding physical loops and redundant links, we are turning your Asia Engineering site into a **"Hard Mode" enterprise switching lab**. You will practice Trunking, EtherChannel, and STP over and over again.
-
-Here is your upgraded blueprint with the new wiring instructions, 5 VLANs, and advanced edge security.
+Here is your complete, unified, and definitive master blueprint for the **Asia Engineering Site** (incorporating all Layer 2 "Hard Mode" designs, wiring changes, 5 VLANs, DHCP, and full Layer 3 OSPF/Routing integration).
 
 ---
 
-### Phase 1: The "Hard Mode" Wiring Guide
+# Asia Engineering Site — Master Blueprint (Hard Mode Lab)
 
-To create this lab, you need to delete a few of the existing single wires in your topology and replace them with redundant links and cross-connections.
-
-**1. The Core & Router Link:**
-
-* Keep the single wire between **R31 (WAN)** and **R27 (Core)**. This will be your 802.1Q Trunk for Router-on-a-Stick.
-
-**2. Build 4 EtherChannels (Dual-Links):**
-Delete the single wires connecting R27 to R32, R34, R41, and R35. Replace them with **two wires each**:
-
-* Connect 2 wires between **R27** and **R32** (Port-Channel 1)
-* Connect 2 wires between **R27** and **R34** (Port-Channel 2)
-* Connect 2 wires between **R27** and **R41** (Port-Channel 3)
-* Connect 2 wires between **R27** and **R35** (Port-Channel 4)
-
-**3. Build Spanning Tree Loops (Cross-Connects):**
-Leave the remaining switches (R33, R36, R40, R39) connected via single wires, but daisy-chain them to create physical triangles (loops) that will force STP to calculate paths and block ports:
-
-* Connect 1 wire from **R32** to **R33**, and 1 wire from **R33** to **R34**.
-* Connect 1 wire from **R41** to **R40**, and 1 wire from **R40** to **R36**.
-* Connect 1 wire from **R35** to **R39**.
+**Supernets:** `10.2.0.0/16` | `2001:DB8:2::/48`
 
 ---
 
-### Phase 2: The 5-VLAN IP Blueprint
+### Phase 1: Physical Wiring & Topology Changes
 
-We are expanding your network to 5 VLANs. **R31 (WAN Edge)** will handle all the Default Gateways and DHCP Pools using subinterfaces.
+To force Spanning Tree, EtherChannel, and routing protocols to work, your physical cables must match this precise layout:
 
-#### R31 (WAN Router) — Subinterfaces & DHCP (Module 8)
+1. **The WAN Edge Link:**
+* Connect **R31 (WAN Edge)** `e0/0` to **R27 (Core L2)** `e0/0` via a single wire (configured as an 802.1Q Trunk for Router-on-a-Stick).
 
-| Subinterface | VLAN & Name | IP Address (Gateway) | DHCP Pool Range |
+
+2. **The 4 EtherChannel Bundles (Dual-Links):**
+* **R27 to R32:** Use 2 physical wires (Port-Channel 1).
+* **R27 to R34:** Use 2 physical wires (Port-Channel 2).
+* **R27 to R41:** Use 2 physical wires (Port-Channel 3).
+* **R27 to R35:** Use 2 physical wires (Port-Channel 4).
+
+
+3. **Spanning Tree Loop Cross-Connects:**
+* Connect **R32** to **R33**, and **R33** to **R34**.
+* Connect **R41** to **R40**, and **R40** to **R36**.
+* Connect **R35** to **R39**.
+
+
+
+---
+
+### Phase 2: Layer 2 VLAN & Switch Management Setup
+
+#### 1. The 5 Global VLANs (Modules 3, 6, & 9)
+
+You must create these 5 VLANs on **every single switch** (`R27`, `R32`–`R41`):
+
+* **VLAN 99:** Management
+* **VLAN 100:** Development (`Dev`)
+* **VLAN 101:** Testing (`Test`)
+* **VLAN 102:** Quality Assurance (`QA`)
+* **VLAN 103:** Guest
+
+#### 2. Switch Management IP Addressing (Module 2)
+
+Every switch is strictly Layer 2 and lives on VLAN 99, pointing to the router's subinterface gateway (`10.2.99.1`).
+
+* **R27 (Core L2 Switch):** `10.2.99.2/24` (Gateway: `10.2.99.1`)
+* **Access Switches (`R32` to `R41`):** Statically assigned IPs from `10.2.99.11` to `10.2.99.18` (Gateway: `10.2.99.1`).
+
+---
+
+### Phase 3: Layer 3 Subinterfaces, DHCP, and Routing (Modules 8, 14, 15–17)
+
+All default gateways, DHCP pools, and dynamic routing configurations terminate on **R31 (WAN Edge Router)**.
+
+#### 1. R31 Subinterfaces & DHCP Server Pools
+
+| Subinterface | VLAN | IP Address (Gateway) | DHCP Scope Range |
 | --- | --- | --- | --- |
-| `e0/0.99` | **VLAN 99 (Mgmt)** | `10.2.99.1/24` | *No DHCP (Static only)* |
-| `e0/0.100` | **VLAN 100 (Dev)** | `10.2.100.1/24` | `10.2.100.50` - `.200` |
-| `e0/0.101` | **VLAN 101 (Test)** | `10.2.101.1/24` | `10.2.101.50` - `.200` |
-| `e0/0.102` | **VLAN 102 (QA)** | `10.2.102.1/24` | `10.2.102.50` - `.200` |
-| `e0/0.103` | **VLAN 103 (Guest)** | `10.2.103.1/24` | `10.2.103.50` - `.200` |
+| `e0/0.99` | **VLAN 99** | `10.2.99.1/24` | *Static Only (No DHCP)* |
+| `e0/0.100` | **VLAN 100** | `10.2.100.1/24` | `10.2.100.50` – `10.2.100.200` |
+| `e0/0.101` | **VLAN 101** | `10.2.101.1/24` | `10.2.101.50` – `10.2.101.200` |
+| `e0/0.102` | **VLAN 102** | `10.2.102.1/24` | `10.2.102.50` – `10.2.102.200` |
+| `e0/0.103` | **VLAN 103** | `10.2.103.1/24` | `10.2.103.50` – `10.2.103.200` |
 
-#### The 9 Switches — Management IPs (Module 2)
+#### 2. VPCS Access Ports & Dynamic Allocation (Module 7)
 
-Every switch is now strictly Layer 2. They need an IP to be managed and a gateway pointing to the router.
+The end-user PCs plug into specific switch access ports and automatically acquire their IPs via DHCP from R31:
 
-* **VLAN 99 IP Range:** `10.2.99.2` through `10.2.99.18`
-* **Default Gateway:** Set `ip default-gateway 10.2.99.1` on all 9 switches.
-
-#### The 5 VPCS Endpoints — Access Ports (Module 7)
-
-Assign the VPCs to their new VLANs. With PortFast and BPDU Guard enabled, they should instantly pull IPs from R31.
-
-| Node | Connected Switch | Assigned VLAN | Expected IP (Via DHCP) |
-| --- | --- | --- | --- |
-| **VPC46** | R32 | 100 (Dev) | `10.2.100.x` |
-| **VPC16** | R34 | 101 (Test) | `10.2.101.x` |
-| **VPC23** | R41 | 102 (QA) | `10.2.102.x` |
-| **VPC22** | R35 | 103 (Guest) | `10.2.103.x` |
-| **VPC25** | R39 | 103 (Guest) | `10.2.103.x` |
+* **VPC46** (Connected to R32): Access VLAN 100 $\rightarrow$ Receives `10.2.100.x`
+* **VPC16** (Connected to R34): Access VLAN 101 $\rightarrow$ Receives `10.2.101.x`
+* **VPC23** (Connected to R41): Access VLAN 102 $\rightarrow$ Receives `10.2.102.x`
+* **VPC22** (Connected to R35): Access VLAN 103 $\rightarrow$ Receives `10.2.103.x`
+* **VPC25** (Connected to R39): Access VLAN 103 $\rightarrow$ Receives `10.2.103.x`
 
 ---
 
-### Phase 3: How to Execute Your Lab Repetitions
+### Phase 4: Enterprise Layer 3 Integration (OSPF & Summarization)
 
-With this new wiring, here is how you will practice your modules:
+To tie Asia into the rest of your corporate topology (Data Center, Sales, VIP) through the central ISP/WAN cloud:
 
-* **Module 6 (VLANs):** You must create all 5 VLANs (`99, 100, 101, 102, 103`) on **every single switch**. (Great practice for repetitive CLI work, or configuring VTP).
-* **Module 3 (Trunking):** Every single wire connecting a switch to another switch (or to the router) must be a trunk. You will practice `switchport mode trunk` and `switchport trunk allowed vlan ...` at least 15 times in this setup.
-* **Module 4 (EtherChannel):** You will configure LACP `channel-group X mode active` on R27 four separate times, and once each on R32, R34, R41, and R35.
-* **Modules 9 & 10 (STP & MST):** Because you built triangles (e.g., R32 to R33 to R34 back to R27), Spanning Tree will naturally detect a broadcast loop and shut down one of those links. You will configure `R27` as the Primary Root Bridge. You will practice using `show spanning-tree` to hunt down exactly which ports got blocked.
-* **Module 7 & 11 (BPDU Guard & Security):** On the 5 specific switch ports pointing to your VPCs, you will configure `switchport mode access`, `switchport access vlan X`, and critically: `spanning-tree portfast` and `spanning-tree bpduguard enable`. (If you ever accidentally plug a switch into one of those VPC ports, BPDU Guard will instantly slam the port shut to protect the network).
+* **OSPF Area Configuration (Modules 15–17):**
+* Enable OSPF on R31 pointing toward the ISP cloud in **Area 0**.
+* Use the network statement `network 10.2.0.0 0.0.255.255 area 0` (or run OSPF natively on the interface).
+* Ensure `passive-interface` is configured on R31's subinterfaces (`e0/0.99` through `e0/0.103`) so routing hello packets are never leaked down to the local access switches or user PCs.
 
-This design guarantees you will get massive amounts of hands-on repetition for every single Layer 2 technology on your list.
 
-Would you like the exact Cisco IOS CLI commands to build the EtherChannels and Subinterfaces, or do you want to attempt the configuration from memory first?
+* **Route Summarization (Module 19):**
+* On R31, configure OSPF summary routes outward toward the WAN cloud so it advertises a single clean supernet (`10.2.0.0/16`) to the Data Center and other branch sites, keeping core routing tables optimized.
