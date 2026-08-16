@@ -1,0 +1,52 @@
+Absolutely — here's your complete master checklist, everything we've covered, in one place.
+
+## 1. WIRING (20 new links + 2 new devices)
+
+**Asia Engineering (9 wires)**
+- [ ] R27↔R32, R27↔R34, R27↔R41, R27↔R35 — 2nd wire each (EtherChannel)
+- [ ] R32↔R33, R33↔R34, R41↔R40, R40↔R36, R35↔R39 (STP loops)
+
+**Support & Sales (3 wires)**
+- [ ] R30↔R37 2nd wire, R30↔R38 2nd wire, R37↔R38 new link
+
+**Data Center** — [ ] audit 8 core-to-access links + server NICs (likely already done)
+
+**VIP Executive** — [ ] confirm R42/R18 device types; optional VPC rewire to R18
+
+**ISP Cloud (8 wires + 2 devices)**
+- [ ] Add ISP-Core1, ISP-Core2
+- [ ] Backbone link + 5 site-to-ISP links (R4, R5, R31, R29, R42)
+
+## 2. DEVICE-TYPE CHECKS
+- [ ] Confirm R30 is actually a switch (Support & Sales)
+- [ ] Confirm R42=router, R18=switch (VIP)
+
+## 3. IP ADDRESSING (do only after wiring is verified)
+- [ ] Data Center — 10.1.0.0/16, all static, HSRP VIPs on R4/R5
+- [ ] Asia Engineering — 10.2.0.0/16, infra static, VPCs DHCP
+- [ ] Support & Sales — 10.3.0.0/16, infra static, VPCs DHCP
+- [ ] VIP Executive — 10.4.0.0/16, infra static, VPCs DHCP
+- [ ] ISP/WAN transit — 10.255.0.0/16, all static
+
+## 4. VLAN / L2 CONFIG
+- [ ] Create all VLANs on every switch, per site
+- [ ] Trunk every inter-switch/router link
+- [ ] EtherChannel/LACP (Asia: 4 bundles, Support & Sales: 2 bundles)
+- [ ] STP root bridge + verify blocked ports
+- [ ] PortFast + BPDU Guard on VPC access ports
+
+## 5. L3 / ROUTING CONFIG
+- [ ] DHCP pools on each site's edge router
+- [ ] HSRP on R4/R5 (Data Center)
+- [ ] OSPF Area 0 on all 5 edge routers + ISP-Core1/Core2
+- [ ] Passive-interface on all user-facing SVIs/subinterfaces
+- [ ] Route summarization per site (advertise /16 supernets)
+
+## 6. LOGGING / SNMP (to Linux @ 10.1.10.12)
+- [ ] Apply `logging host` + `snmp-server host` commands on all 22 infrastructure devices (6 DC + 10 Asia + 4 S&S + 2 VIP)
+- [ ] Verify OSPF/routing is fully up first — test with `ping 10.1.10.12` from each site edge router
+- [ ] Remember: VPCS nodes cannot send logs — infra devices only, by design limitation
+
+**Suggested order:** Wiring → device-type checks → IP addressing → VLAN/L2 → L3/OSPF (confirm reachability) → logging/SNMP last, since it depends on everything else working.
+
+Good luck with the build — feel free to come back anytime you want a deeper dive on any single phase (e.g. the actual `router ospf` blocks, or the HSRP priority/preempt commands for R4/R5).
