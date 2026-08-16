@@ -1,0 +1,137 @@
+Yes — that's exactly the right order: **finish all 20 missing wires first, verify the two device-type checks (R30, R42/R18), then move to IP addressing.** Configuring IPs on links that don't physically exist yet will just cause confusion when you can't ping across them.
+
+Here's the full IP checklist, organized by site.
+
+## SITE 1 — Data Center (10.1.0.0/16) — fully static
+
+**Firewall–Core Point-to-Point**
+- [ ] R4 `e0/0` → `10.1.255.1/30`
+- [ ] Fortinet `port2` → `10.1.255.2/30`
+- [ ] R5 `e0/3` → `10.1.255.5/30`
+- [ ] Fortinet `port3` → `10.1.255.6/30`
+
+**Core Router SVIs + HSRP**
+- [ ] R4 VLAN10 → `10.1.10.2/24` | R5 VLAN10 → `10.1.10.3/24` | HSRP VIP → `10.1.10.1`
+- [ ] R4 VLAN20 → `10.1.20.2/24` | R5 VLAN20 → `10.1.20.3/24` | HSRP VIP → `10.1.20.1`
+- [ ] R4 VLAN30 → `10.1.30.2/24` | R5 VLAN30 → `10.1.30.3/24` | HSRP VIP → `10.1.30.1`
+- [ ] R4 VLAN40 → `10.1.40.2/24` | R5 VLAN40 → `10.1.40.3/24` | HSRP VIP → `10.1.40.1`
+- [ ] R4 VLAN99 → `10.1.99.2/24` | R5 VLAN99 → `10.1.99.3/24` | HSRP VIP → `10.1.99.1`
+
+**Switch Management IPs**
+- [ ] R7 → `10.1.99.11/24`
+- [ ] R9 → `10.1.99.12/24`
+- [ ] R8 → `10.1.99.13/24`
+- [ ] R6 → `10.1.99.14/24`
+
+**Linux Servers**
+- [ ] Linux15 → `10.1.10.10/24`, gw `10.1.10.1`
+- [ ] Linux14 → `10.1.10.11/24`, gw `10.1.10.1`
+- [ ] Linux → `10.1.10.12/24`, gw `10.1.10.1`
+- [ ] Linux17 → `10.1.20.10/24`, gw `10.1.20.1`
+- [ ] Linux18 → `10.1.20.11/24`, gw `10.1.20.1`
+
+---
+
+## SITE 2 — Asia Engineering (10.2.0.0/16) — mixed
+
+**R31 Subinterfaces**
+- [ ] `e0/0.99` → `10.2.99.1/24` (static, no DHCP)
+- [ ] `e0/0.100` → `10.2.100.1/24` (DHCP pool `.50`–`.200`)
+- [ ] `e0/0.101` → `10.2.101.1/24` (DHCP pool `.50`–`.200`)
+- [ ] `e0/0.102` → `10.2.102.1/24` (DHCP pool `.50`–`.200`)
+- [ ] `e0/0.103` → `10.2.103.1/24` (DHCP pool `.50`–`.200`)
+
+**Switch Management IPs (all 9 switches, static)**
+- [ ] R27 → `10.2.99.2/24`
+- [ ] R32 → `10.2.99.11/24`
+- [ ] R33 → `10.2.99.12/24`
+- [ ] R34 → `10.2.99.13/24`
+- [ ] R35 → `10.2.99.14/24`
+- [ ] R36 → `10.2.99.15/24`
+- [ ] R39 → `10.2.99.16/24`
+- [ ] R40 → `10.2.99.17/24`
+- [ ] R41 → `10.2.99.18/24`
+- [ ] Set `ip default-gateway 10.2.99.1` on all 9
+
+**VPCs (all DHCP)**
+- [ ] VPC46 → auto (VLAN 100 → `10.2.100.x`)
+- [ ] VPC16 → auto (VLAN 101 → `10.2.101.x`)
+- [ ] VPC23 → auto (VLAN 102 → `10.2.102.x`)
+- [ ] VPC22 → auto (VLAN 103 → `10.2.103.x`)
+- [ ] VPC25 → auto (VLAN 103 → `10.2.103.x`)
+
+---
+
+## SITE 3 — Support & Sales (10.3.0.0/16) — mixed
+
+**R29 Subinterfaces**
+- [ ] `e0/3.99` → `10.3.99.1/24` (static, no DHCP)
+- [ ] `e0/3.30` → `10.3.30.1/24` (DHCP `.50`–`.200`)
+- [ ] `e0/3.31` → `10.3.31.1/24` (DHCP `.50`–`.200`)
+- [ ] `e0/3.32` → `10.3.32.1/24` (DHCP `.50`–`.200`)
+- [ ] `e0/3.33` → `10.3.33.1/24` (DHCP `.50`–`.200`)
+
+**Switch Management IPs (static)**
+- [ ] R30 → `10.3.99.2/24`
+- [ ] R37 → `10.3.99.11/24`
+- [ ] R38 → `10.3.99.12/24`
+- [ ] Set `ip default-gateway 10.3.99.1` on all 3
+
+**VPCs (all DHCP)**
+- [ ] VPC59 → auto (VLAN 30 → `10.3.30.x`)
+- [ ] VPC13 → auto (VLAN 31 → `10.3.31.x`)
+- [ ] VPC12 → auto (VLAN 32 → `10.3.32.x`)
+- [ ] VPC11 → auto (VLAN 33 → `10.3.33.x`)
+- [ ] VPC10 → auto (VLAN 33 → `10.3.33.x`)
+
+---
+
+## SITE 4 — VIP Executive (10.4.0.0/16) — mixed
+
+**R42 Subinterfaces**
+- [ ] `e0/0.99` → `10.4.99.1/24` (static, no DHCP)
+- [ ] `e0/0.40` → `10.4.40.1/24` (DHCP `.50`–`.200`)
+- [ ] `e0/0.41` → `10.4.41.1/24` (DHCP `.50`–`.200`)
+- [ ] `e0/0.42` → `10.4.42.1/24` (DHCP `.50`–`.200`)
+
+**Switch Management IP**
+- [ ] R18 → `10.4.99.11/24`, gw `10.4.99.1` (static)
+
+**VPCs (all DHCP)**
+- [ ] VPC49 → auto (VLAN 40 → `10.4.40.x`)
+- [ ] VPC50 → auto (VLAN 40 → `10.4.40.x`)
+- [ ] VPC58 → auto (VLAN 41 → `10.4.41.x`)
+- [ ] VPC57 → auto (VLAN 42 → `10.4.42.x`)
+
+---
+
+## PHASE B — ISP/WAN Cloud (10.255.0.0/16) — fully static
+
+**Backbone**
+- [ ] ISP-Core1 `e0/0` → `10.255.255.1/30`
+- [ ] ISP-Core2 `e0/0` → `10.255.255.2/30`
+
+**Site-to-ISP Links** *(the doc gives the /30 blocks but not which host gets which end — standard convention: site router = .1, ISP router = .2 within each block; confirm this is fine for you before applying)*
+- [ ] R4 `e0/10` → `10.255.1.1/30` | ISP-Core1 `e0/1` → `10.255.1.2/30`
+- [ ] R5 `e0/7` → `10.255.1.5/30` | ISP-Core2 `e0/1` → `10.255.1.6/30`
+- [ ] R31 → `10.255.2.1/30` | ISP-Core1 `e0/2` → `10.255.2.2/30`
+- [ ] R29 → `10.255.3.1/30` | ISP-Core1 `e0/3` → `10.255.3.2/30`
+- [ ] R42 → `10.255.4.1/30` | ISP-Core2 `e0/2` → `10.255.4.2/30`
+
+---
+
+## STATIC vs DHCP — Summary
+
+**Fully Static (no DHCP anywhere in the site):**
+- Data Center — every device (firewall links, core SVIs, switch mgmt IPs, all Linux servers)
+- ISP/WAN Cloud — every link (backbone + all 5 site-to-ISP links)
+
+**Static:**
+- All switch/router management interfaces on VLAN 99, across every site (Asia, Support & Sales, VIP)
+- All router subinterfaces acting as gateways (the `.1` address on every VLAN)
+- All point-to-point WAN/firewall links everywhere
+
+**DHCP (client-assigned only):**
+- Every VPC endpoint in Asia Engineering, Support & Sales, and VIP Executive — pulling from their respective router's DHCP pools (`.50`–`.200` range on each VLAN subinterface)
+
+**Rule of thumb across this whole design:** infrastructure devices (routers, switches, firewalls) are always static; end-user endpoints (VPCs) are always DHCP, except in the Data Center, where even the Linux servers are static since that site is explicitly "100% static."
