@@ -1,0 +1,113 @@
+                       🌐 Network Troubleshooting Decision Tree**
+
+```
+START
+│
+├── Is the issue LOCAL or NETWORK-WIDE?
+│       │
+│       ├── LOCAL → Check host
+│       │       ├── Can host reach gateway?
+│       │       │       ├── NO → Check VLAN / switchport
+│       │       │       │       └── Commands:
+│       │       │       │           - show vlan brief
+│       │       │       │           - show interfaces switchport
+│       │       │       │           - show mac address-table
+│       │       │       └── YES → Check firewall/NAT
+│       │       │               └── Commands:
+│       │       │                   - packet-tracer (ASA)
+│       │       │                   - diagnose debug flow (FG)
+│       │       └── END
+│
+└── NETWORK-WIDE → Continue
+        │
+        ├── Is there PACKET LOSS or LATENCY?
+        │       │
+        │       ├── YES → Check physical interfaces
+        │       │       ├── Errors/drops?
+        │       │       │       ├── YES → Fix cabling/duplex/optics
+        │       │       │       └── Commands:
+        │       │       │           - show ip interface brief
+        │       │       │           - show interfaces
+        │       │       └── NO → Check routing
+        │       │               └── Commands:
+        │       │                   - show ip route
+        │       │                   - show ip cef
+        │       └── NO → Continue
+        │
+        ├── Is a BUILDING or VLAN DOWN?
+        │       │
+        │       ├── YES → Check switching/STP
+        │       │       ├── STP blocking?
+        │       │       │       ├── YES → Fix root bridge / port roles
+        │       │       │       └── Commands:
+        │       │       │           - show spanning-tree
+        │       │       └── VLAN missing?
+        │       │               ├── YES → Fix trunking/VLAN config
+        │       │               └── Commands:
+        │       │                   - show vlan brief
+        │       │                   - show interfaces trunk
+        │       └── NO → Continue
+        │
+        ├── Are ROUTING NEIGHBORS DOWN?
+        │       │
+        │       ├── YES → Identify protocol
+        │       │       ├── OSPF adjacency lost?
+        │       │       │       └── Commands:
+        │       │       │           - show ip ospf neighbor
+        │       │       │           - show ip ospf database
+        │       │       ├── BGP session down?
+        │       │       │       └── Commands:
+        │       │       │           - show ip bgp summary
+        │       │       │           - show ip bgp
+        │       │       └── SD-WAN OMP/BFD down?
+        │       │               └── Commands:
+        │       │                   - show sdwan omp peers
+        │       │                   - show sdwan bfd sessions
+        │       └── NO → Continue
+        │
+        ├── Are VPN/IPSEC TUNNELS DOWN?
+        │       │
+        │       ├── Phase 1 down?
+        │       │       └── Commands:
+        │       │           - show crypto isakmp sa
+        │       │
+        │       ├── Phase 2 down?
+        │       │       └── Commands:
+        │       │           - show crypto ipsec sa
+        │       │
+        │       └── SD-WAN tunnel errors?
+        │               └── Commands:
+        │                   - show sdwan tunnel statistics
+        │
+        ├── Is the FIREWALL BLOCKING TRAFFIC?
+        │       │
+        │       ├── YES → Check policy/NAT
+        │       │       └── Commands:
+        │       │           - diagnose firewall iprope lookup (FG)
+        │       │           - packet-tracer input inside x.x.x.x (ASA)
+        │       │           - show ip nat translations
+        │       └── NO → Continue
+        │
+        ├── Is MONITORING STACK DOWN? (Grafana/Loki/Prometheus)
+        │       │
+        │       ├── Containers down?
+        │       │       └── Commands:
+        │       │           - docker ps
+        │       │           - docker logs <container>
+        │       │
+        │       ├── Prometheus/Loki/Grafana unreachable?
+        │       │       └── Commands:
+        │       │           - curl localhost:9090
+        │       │           - curl localhost:3100
+        │       │           - curl localhost:3000
+        │       │
+        │       └── System errors?
+        │               └── Commands:
+        │                   - journalctl -xe
+        │                   - df -h
+        │                   - top / htop
+        │
+        └── FINAL STEP: VALIDATE FIX
+                ├── Re-check metrics
+                ├── Confirm user connectivity
+                └── Document incident
