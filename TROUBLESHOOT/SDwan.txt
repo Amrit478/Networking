@@ -103,3 +103,40 @@
         │ re-sync vSmart         │  │ adjust path selection  │  │ adjust DPI signatures  │
         └────────────────────────┘  └────────────────────────┘  └────────────────────────┘
 
+🔥 SD‑WAN Quick Fix Toolkit
+
+    Control plane:
+
+        Certificates
+
+        NTP
+
+        Firewall ports
+
+        NAT traversal
+
+    Data plane:
+
+        BFD
+
+        MTU
+
+        SLA
+
+        Tunnel statistics
+
+    Routing:
+
+        OMP peers
+
+        OMP routes
+
+        TLOC selection
+
+    Policies:
+
+        vSmart policy sync
+
+        App-route rules
+
+        DPI classification
