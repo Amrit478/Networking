@@ -58,3 +58,15 @@
         │ - Fix uplink         │  │ - Set correct root   │  │ - Find looped port     │
         │ - Check EtherChannel │  │ - Check MST regions  │  │ - Shut offending port  │
         └──────────────────────┘  └──────────────────────┘  └────────────────────────┘
+
+🧰 Quick STP Fix Toolkit
+
+    BPDU Guard → Protect access ports
+
+    Root Guard → Prevent rogue roots
+
+    Loop Guard → Prevent unidirectional link loops
+
+    Storm Control → Prevent broadcast storms
+
+    Correct Root Priority → Ensure deterministic topology
