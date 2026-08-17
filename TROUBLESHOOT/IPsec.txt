@@ -1,0 +1,197 @@
+ 🧭 IPsec Troubleshooting Decision Tree
+
+```
+                           ┌────────────────────────────────┐
+                           │          IPSEC DOMAIN          │
+                           └─────────────────┬──────────────┘
+                                             │
+                                             ▼
+                           ┌────────────────────────────────┐
+                           │ 1. Is Phase 1 (IKE) UP?         │
+                           └─────────────────┬──────────────┘
+                                             │
+                     ┌───────────────────────┼──────────────────────────────┐
+                     ▼                       ▼                              ▼
+        ┌────────────────────────┐  ┌────────────────────────┐  ┌────────────────────────┐
+        │ show crypto isakmp sa  │  │ diagnose vpn ike       │  │ show vpn ike gateway   │
+        │ show crypto ikev2 sa   │  │ debug (FG)             │  │ (FG)                   │
+        └───────────┬────────────┘  └───────────┬──────────┘  └───────────┬───────────┘
+                    │                           │                           │
+                    ▼                           ▼                           ▼
+        ┌────────────────────────┐  ┌────────────────────────┐  ┌────────────────────────┐
+        │ IKE DOWN               │  │ IKE NEGOTIATING        │  │ IKE UP                 │
+        └───────────┬────────────┘  └───────────┬──────────┘  └───────────┬───────────┘
+                    │                           │                           │
+                    ▼                           ▼                           ▼
+        ┌────────────────────────┐  ┌────────────────────────┐  ┌────────────────────────┐
+        │ FIX: Phase 1 params    │  │ Check proposals        │  │ Go to Phase 2          │
+        │ - PSK mismatch         │  │ Check NAT-T            │  │                        │
+        │ - Wrong peer IP        │  │ Check firewall ports   │  │                        │
+        └────────────────────────┘  └────────────────────────┘  └────────────────────────┘
+```
+
+---
+
+# 🔍 **2. Phase 1 (IKE) Deep-Dive**
+
+### **Check IKE status**
+- Cisco: **show crypto isakmp sa**  
+- Cisco IKEv2: **show crypto ikev2 sa**  
+- FortiGate: **diagnose vpn ike gateway list**  
+- ASA: **show crypto ikev1 sa**  
+
+### **Common Phase 1 Failures**
+- **PSK mismatch**  
+- **Wrong peer IP**  
+- **Firewall blocking UDP 500/4500**  
+- **NAT-T disabled**  
+- **IKE version mismatch (v1 vs v2)**  
+- **Time/NTP skew**  
+- **Certificate expired**  
+
+### **Fixes**
+- Match PSK  
+- Match IKE version  
+- Enable NAT-T  
+- Open UDP 500/4500  
+- Sync NTP  
+- Re-enroll certificates  
+
+---
+
+# 🔍 **3. Phase 2 (IPsec) Troubleshooting**
+
+```
+                           ┌────────────────────────────────┐
+                           │ 2. Is Phase 2 (IPsec) UP?       │
+                           └─────────────────┬──────────────┘
+                                             │
+                                             ▼
+                           ┌────────────────────────────────┐
+                           │ show crypto ipsec sa           │
+                           │ diagnose vpn tunnel list (FG)  │
+                           └─────────────────┬──────────────┘
+                                             │
+                     ┌───────────────────────┼──────────────────────────────┐
+                     ▼                       ▼                              ▼
+        ┌────────────────────────┐  ┌────────────────────────┐  ┌────────────────────────┐
+        │ No Phase 2 SAs         │  │ Phase 2 negotiating    │  │ Phase 2 UP             │
+        └───────────┬────────────┘  └───────────┬──────────┘  └───────────┬───────────┘
+                    │                           │                           │
+                    ▼                           ▼                           ▼
+        ┌────────────────────────┐  ┌────────────────────────┐  ┌────────────────────────┐
+        │ FIX: Phase 2 params    │  │ Check selectors        │  │ Go to traffic testing  │
+        │ - Proxy-ID mismatch    │  │ Check PFS              │  │                        │
+        │ - Wrong subnets        │  │ Check encryption       │  │                        │
+        └────────────────────────┘  └────────────────────────┘  └────────────────────────┘
+```
+
+---
+
+# 🔍 **Phase 2 Deep-Dive**
+
+### **Check IPsec status**
+- Cisco: **show crypto ipsec sa**  
+- FortiGate: **diagnose vpn tunnel list**  
+- ASA: **show crypto ipsec sa**  
+
+### **Common Phase 2 Failures**
+- **Proxy-ID mismatch** (FortiGate)  
+- **Incorrect ACL crypto map** (Cisco ASA)  
+- **Wrong local/remote subnets**  
+- **PFS mismatch**  
+- **Encryption mismatch (AES128 vs AES256)**  
+- **Lifetime mismatch**  
+
+### **Fixes**
+- Match proxy-IDs  
+- Match crypto ACLs  
+- Match PFS  
+- Match encryption  
+- Match lifetimes  
+
+---
+
+# 🔍 **4. Tunnel UP but Traffic Not Passing**
+
+
+
+
+
+```
+                           ┌────────────────────────────────┐
+                           │ 3. Tunnel UP, no traffic?       │
+                           └─────────────────┬──────────────┘
+                                             │
+                                             ▼
+                           ┌────────────────────────────────┐
+                           │ Check routing / NAT / ACLs     │
+                           └─────────────────┬──────────────┘
+                                             │
+                     ┌───────────────────────┼──────────────────────────────┐
+                     ▼                       ▼                              ▼
+        ┌────────────────────────┐  ┌────────────────────────┐  ┌────────────────────────┐
+        │ Wrong routing?         │  │ NAT interfering?       │  │ Firewall blocking?     │
+        └───────────┬────────────┘  └───────────┬──────────┘  └───────────┬───────────┘
+                    │                           │                           │
+                    ▼                           ▼                           ▼
+        ┌────────────────────────┐  ┌────────────────────────┐  ┌────────────────────────┐
+        │ Fix next-hop           │  │ Add NAT exemption      │  │ Add IPsec ACLs         │
+        │ Fix crypto ACL         │  │ Fix policy routes      │  │ Fix zones / interfaces │
+        └────────────────────────┘  └────────────────────────┘  └────────────────────────┘
+```
+
+---
+
+# 🔍 **5. NAT Traversal (NAT‑T) Issues**
+
+### Symptoms
+- Tunnel comes up but drops quickly  
+- Phase 1 works, Phase 2 fails  
+- Only one direction works  
+
+### Fixes
+- Enable NAT-T  
+- Ensure UDP 4500 open  
+- Fix double NAT  
+- Fix PAT pool exhaustion  
+
+---
+
+# 🔍 **6. IPsec + SD‑WAN Interactions**
+
+### Common issues
+- TLOC extension misconfigured  
+- Wrong color for IPsec transport  
+- BFD flapping causing tunnel resets  
+- OMP routes not matching IPsec selectors  
+
+Fix:
+- Correct TLOC extension  
+- Fix BFD timers  
+- Fix OMP route advertisement  
+- Ensure IPsec selectors match SD‑WAN prefixes  
+
+---
+
+# 🧰 **IPsec Quick Fix Toolkit**
+
+- **Phase 1:**  
+  - PSK  
+  - IKE version  
+  - NAT-T  
+  - Certificates  
+  - NTP  
+
+- **Phase 2:**  
+  - Proxy-ID  
+  - Crypto ACL  
+  - PFS  
+  - Encryption  
+  - Lifetime  
+
+- **Traffic:**  
+  - Routing  
+  - NAT exemption  
+  - Firewall ACLs  
+  - MTU/fragmentation  
