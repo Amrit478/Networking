@@ -1,0 +1,82 @@
+Building / Site	Device	IP Address(es)	Assignment Type
+
+
+1. Data Center (Site 1)	R7 Switch	10.1.99.11/24	Static
+	
+R9 Switch	10.1.99.12/24	Static
+
+R8 Switch	10.1.99.13/24	Static
+
+R6 Switch	10.1.99.14/24	Static
+
+R4 (Core 1) Physical e0/0	10.1.255.1/30 / IPv6: 2001:DB8:1:255::1/127	Static
+
+R4 (Core 1) SVIs	10.1.10.2, 10.1.20.2, 10.1.30.2, 10.1.40.2, 10.1.99.2	Static
+
+R5 (Core 2) Physical e0/3	10.1.255.5/30 / IPv6: 2001:DB8:1:255::4/127	Static
+
+R5 (Core 2) SVIs	10.1.10.3, 10.1.20.3, 10.1.30.3, 10.1.40.3, 10.1.99.3	Static
+
+R4 & R5 HSRP Virtual IPs	10.1.10.1, 10.1.20.1, 10.1.30.1, 10.1.40.1, 10.1.99.1	Static
+
+Fortinet Firewall port2	10.1.255.2/30 / IPv6: 2001:DB8:1:255::2/127	Static
+
+Fortinet Firewall port3	10.1.255.6/30 / IPv6: 2001:DB8:1:255::5/127	Static
+
+Linux15 (Web)	10.1.10.10/24 / IPv6: 2001:DB8:1:10::10/64	Static
+
+Linux14 (Web)	10.1.10.11/24 / IPv6: 2001:DB8:1:10::11/64	Static
+
+Linux (Web)	10.1.10.12/24 / IPv6: 2001:DB8:1:10::12/64	Static
+
+Linux17 (DB)	10.1.20.10/24 / IPv6: 2001:DB8:1:20::10/64	Static
+
+Linux18 (DB)	10.1.20.11/24 / IPv6: 2001:DB8:1:20::11/64	Static
+
+2. Asia Engineering	R31 (WAN Edge) SVIs	10.2.99.1, 10.2.100.1, 10.2.101.1, 10.2.102.1, 10.2.103.1	Static
+
+R27 (Core L2 Switch)	10.2.99.2/24	Static
+
+Access Switches (R32–R41)	10.2.99.11 to 10.2.99.18	Static
+
+VPC46 (Dev)	10.2.100.x	Dynamic (DHCP)
+
+VPC16 (Test)	10.2.101.x	Dynamic (DHCP)
+
+VPC23 (QA)	10.2.102.x	Dynamic (DHCP)
+
+VPC22 (Guest)	10.2.103.x	Dynamic (DHCP)
+
+VPC25 (Guest)	10.2.103.x	Dynamic (DHCP)
+
+3. VIP Executive	R42 (Router) SVIs	10.4.99.1, 10.4.40.1, 10.4.41.1, 10.4.42.1	Static
+
+R18 (Switch)	10.4.99.11/24	Static
+
+VPC49 (Exec)	10.4.40.x	Dynamic (DHCP)
+
+VPC50 (Exec)	10.4.40.x	Dynamic (DHCP)
+
+VPC58 (Sandbox)	10.4.41.x	Dynamic (DHCP)
+
+VPC57 (Guest)	10.4.42.x	Dynamic (DHCP)
+
+4. Support & Sales	R29 (WAN Edge) SVIs	10.3.99.1, 10.3.30.1, 10.3.31.1, 10.3.32.1, 10.3.33.1	Static
+
+R30 (Core Switch)	10.3.99.2/24	Static
+
+R37 (Access Switch)	10.3.99.11/24	Static
+
+R38 (Access Switch)	10.3.99.12/24	Static
+
+VPC59 (Sales)	10.3.30.x	Dynamic (DHCP)
+
+VPC13 (Support)	10.3.31.x	Dynamic (DHCP)
+
+VPC12 (Billing)	10.3.32.x	Dynamic (DHCP)
+
+VPC11 (Partner)	10.3.33.x	Dynamic (DHCP)
+
+VPC10 (Partner)	10.3.33.x	Dynamic (DHCP)
+
+
