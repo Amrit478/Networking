@@ -46,3 +46,21 @@
         ┌────────────────────────┐  ┌────────────────────────┐  ┌────────────────────────┐
         │ Go to NAT check        │  │ Fix rule / zone / ACL  │  │ Add explicit allow     │
         └────────────────────────┘  └────────────────────────┘  └────────────────────────┘
+
+🧰 Firewall/NAT Quick Fix Toolkit
+
+    packet-tracer (ASA)
+
+    diagnose debug flow (FortiGate)
+
+    show ip nat translations
+
+    show firewall policy
+
+    tcpdump / sniffer
+
+    Check zones / VRFs
+
+    Check routing before NAT
+
+    Check NAT before firewall policy
