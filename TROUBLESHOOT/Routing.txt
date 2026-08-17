@@ -60,3 +60,20 @@
         │ - Dead/hello timers  │  │ - Fix route-maps       │  │   connections          │
         │ - Area mismatch      │  │ - Fix AS-path loops    │  │ - Fix certs/time sync │
         └──────────────────────┘  └────────────────────────┘  └────────────────────────┘
+
+
+🧰 Routing Quick Fix Toolkit
+
+    Check next-hop reachability
+
+    Check MTU
+
+    Check ARP
+
+    Check protocol neighbors
+
+    Check route filtering
+
+    Check redistribution
+
+    Check hardware drops
