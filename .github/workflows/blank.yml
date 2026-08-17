@@ -1,36 +1,39 @@
-# This is a basic workflow to help you get started with Actions
+name: Network Automation CI/CD
 
-name: CI
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "master" branch
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  validate-and-test:
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      # 1. Pull down your repository code (Python, Jinja templates, YAML data)
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      # 2. Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      # 3. Install required network libraries (like Jinja2, PyYAML, Netmiko)
+      - name: Install Dependencies
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          python -m pip install --upgrade pip
+          pip install jinja2 pyyaml netmiko pytest
+
+      # 4. Run a Python test script to render Jinja templates using your YAML data
+      # This checks if your templates generate valid CLI commands without errors
+      - name: Test Jinja Template Rendering
+        run: |
+          python scripts/test_render.py
+
+      # 5. Run static code analysis (linting) on your Python scripts
+      - name: Lint Python Code
+        run: |
+          flake8 scripts/ --count --select=E9,F63,F7,F82 --show-source --statistics
